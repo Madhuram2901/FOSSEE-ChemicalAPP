@@ -91,23 +91,22 @@ export default function Dashboard() {
                                 <StatCard
                                     title="Total Equipment"
                                     value={summary ? `${summary.total_equipment} units` : "—"}
-                                    subtitle={summary ? "Latest upload" : null}
-                                    icon={<img src={chemistryIcon} alt="Chemistry" className="w-8 h-8 object-contain" />}
+                                    icon={<img src={chemistryIcon} alt="Chemistry" className="w-12 h-12 object-contain" />}
                                 />
                                 <StatCard
                                     title="Avg Flowrate"
                                     value={summary ? `${summary.averages.flowrate} m³/h` : "—"}
-                                    icon={<img src={flowrateIcon} alt="Flowrate" className="w-8 h-8 object-contain" />}
+                                    icon={<img src={flowrateIcon} alt="Flowrate" className="w-9 h-9 object-contain" />}
                                 />
                                 <StatCard
                                     title="Avg Pressure"
                                     value={summary ? `${summary.averages.pressure} bar` : "—"}
-                                    icon={<img src={pressureIcon} alt="Pressure" className="w-8 h-8 object-contain" />}
+                                    icon={<img src={pressureIcon} alt="Pressure" className="w-12 h-12 object-contain" />}
                                 />
                                 <StatCard
                                     title="Avg Temperature"
                                     value={summary ? `${summary.averages.temperature} °C` : "—"}
-                                    icon={<img src={temperatureIcon} alt="Temperature" className="w-8 h-8 object-contain" />}
+                                    icon={<img src={temperatureIcon} alt="Temperature" className="w-9 h-9 object-contain" />}
                                 />
                             </div>
 

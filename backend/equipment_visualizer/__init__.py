@@ -1,0 +1,3 @@
+"""
+Equipment Visualizer Django Project
+"""

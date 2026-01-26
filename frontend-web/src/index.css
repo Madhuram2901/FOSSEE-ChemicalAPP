@@ -1,75 +1,32 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@import "tailwindcss";
+
+@theme {
+  /* Main Colors */
+  --color-primary: #000000;
+  --color-primary-light: #FAF9F6;
+
+  /* App/Background Colors */
+  --color-app-bg: #CDB885;
+  --color-app-surface: #EFE1B5;
+  --color-app-border: #000000;
+
+  /* Metric Specific Colors */
+  --color-flowrate: #10b981;
+  --color-pressure: #f59e0b;
+  --color-temperature: #ef4444;
+
+  /* Text Colors */
+  --color-content-main: #000000;
+  --color-content-muted: #000000;
 }
 
-:root {
-  --primary-color: #2563eb;
-  --primary-dark: #1d4ed8;
-  --background: #0f172a;
-  --surface: #1e293b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+* {
+  margin: 20;
+  padding: 20;
+  box-sizing: border-box;
 }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: var(--background);
-  color: var(--text-primary);
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#root {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.app-container {
-  text-align: center;
-  padding: 2rem;
-}
-
-.app-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #60a5fa, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 1rem;
-}
-
-.app-status {
-  font-size: 1.25rem;
-  color: var(--text-secondary);
-  padding: 1rem 2rem;
-  background: var(--surface);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.status-indicator {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  background: #22c55e;
-  border-radius: 50%;
-  margin-right: 0.5rem;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  @apply bg-app-bg text-content-main;
 }

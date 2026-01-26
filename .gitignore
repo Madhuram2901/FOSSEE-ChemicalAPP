@@ -32,6 +32,8 @@ local_settings.py
 db.sqlite3
 *.pot
 *.pyc
+backend/media/
+
 
 # Node.js
 node_modules/

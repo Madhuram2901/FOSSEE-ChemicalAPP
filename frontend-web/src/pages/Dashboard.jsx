@@ -6,6 +6,16 @@ import ChartSection from "../components/ChartSection";
 import UploadForm from "../components/UploadForm";
 import DataTable from "../components/DataTable";
 import TypeDistribution from "../components/TypeDistribution";
+import flowrateIcon from "../assets/flowrate.png";
+import chemistryIcon from "../assets/chemistry.png";
+import pressureIcon from "../assets/pressure.png";
+import temperatureIcon from "../assets/temperature.png";
+
+// Icon Attributions:
+// Flow rate: https://www.flaticon.com/free-icons/flow-rate
+// Chemistry: https://www.flaticon.com/free-icons/chemistry
+// Pressure: https://www.flaticon.com/free-icons/pressure
+// Temperature: Provided by user (via Flaticon)
 
 const API = "http://localhost:8000/api";
 
@@ -82,22 +92,22 @@ export default function Dashboard() {
                                     title="Total Equipment"
                                     value={summary ? `${summary.total_equipment} units` : "—"}
                                     subtitle={summary ? "Latest upload" : null}
-                                    icon="🏭"
+                                    icon={<img src={chemistryIcon} alt="Chemistry" className="w-8 h-8 object-contain" />}
                                 />
                                 <StatCard
                                     title="Avg Flowrate"
                                     value={summary ? `${summary.averages.flowrate} m³/h` : "—"}
-                                    icon=""
+                                    icon={<img src={flowrateIcon} alt="Flowrate" className="w-8 h-8 object-contain" />}
                                 />
                                 <StatCard
                                     title="Avg Pressure"
                                     value={summary ? `${summary.averages.pressure} bar` : "—"}
-                                    icon="📊"
+                                    icon={<img src={pressureIcon} alt="Pressure" className="w-8 h-8 object-contain" />}
                                 />
                                 <StatCard
                                     title="Avg Temperature"
                                     value={summary ? `${summary.averages.temperature} °C` : "—"}
-                                    icon="🌡️"
+                                    icon={<img src={temperatureIcon} alt="Temperature" className="w-8 h-8 object-contain" />}
                                 />
                             </div>
 

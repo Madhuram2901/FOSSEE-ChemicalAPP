@@ -3,16 +3,10 @@
  * Main App Component
  */
 
+import Dashboard from './pages/Dashboard';
+
 function App() {
-    return (
-        <div className="app-container">
-            <h1 className="app-title">Chemical Equipment Parameter Visualizer</h1>
-            <div className="app-status">
-                <span className="status-indicator"></span>
-                Web App Initialized
-            </div>
-        </div>
-    )
+    return <Dashboard />;
 }
 
-export default App
+export default App;

@@ -18,6 +18,18 @@ ChartJS.register(
     Legend
 );
 
+const barColors = ["#10b981", "#f59e0b", "#ef4444"]; // flowrate, pressure, temperature
+const pieColors = [
+    "#2563eb", // primary
+    "#10b981", // flowrate
+    "#f59e0b", // pressure
+    "#ef4444", // temperature
+    "#8b5cf6",
+    "#ec4899",
+    "#06b6d4",
+    "#84cc16",
+];
+
 export default function ChartSection({ data }) {
     if (!data) return null;
 
@@ -27,7 +39,7 @@ export default function ChartSection({ data }) {
             {
                 label: "Average Values",
                 data: [data.averages.flowrate, data.averages.pressure, data.averages.temperature],
-                backgroundColor: ["#3b82f6", "#10b981", "#f59e0b"],
+                backgroundColor: barColors,
                 borderRadius: 8,
                 barThickness: 40,
             },
@@ -46,10 +58,10 @@ export default function ChartSection({ data }) {
             y: {
                 beginAtZero: true,
                 grid: {
-                    color: "#f3f4f6",
+                    color: "#f1f5f9", // app-border
                 },
                 ticks: {
-                    color: "#6b7280",
+                    color: "#64748b", // content-muted
                 },
             },
             x: {
@@ -57,22 +69,11 @@ export default function ChartSection({ data }) {
                     display: false,
                 },
                 ticks: {
-                    color: "#6b7280",
+                    color: "#64748b", // content-muted
                 },
             },
         },
     };
-
-    const pieColors = [
-        "#3b82f6",
-        "#10b981",
-        "#f59e0b",
-        "#ef4444",
-        "#8b5cf6",
-        "#ec4899",
-        "#06b6d4",
-        "#84cc16",
-    ];
 
     const pieData = {
         labels: Object.keys(data.type_distribution),
@@ -92,7 +93,7 @@ export default function ChartSection({ data }) {
             legend: {
                 position: "right",
                 labels: {
-                    color: "#374151",
+                    color: "#0f172a", // content-main
                     padding: 16,
                     usePointStyle: true,
                     font: {
@@ -106,16 +107,16 @@ export default function ChartSection({ data }) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Bar Chart */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Average Parameters</h3>
+            <div className="bg-app-surface p-6 rounded-2xl shadow-sm border border-app-border">
+                <h3 className="text-lg font-semibold text-content-main mb-4">Average Parameters</h3>
                 <div className="h-64">
                     <Bar data={barData} options={barOptions} />
                 </div>
             </div>
 
             {/* Pie Chart */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Equipment Type Distribution</h3>
+            <div className="bg-app-surface p-6 rounded-2xl shadow-sm border border-app-border">
+                <h3 className="text-lg font-semibold text-content-main mb-4">Equipment Type Distribution</h3>
                 <div className="h-64">
                     <Pie data={pieData} options={pieOptions} />
                 </div>

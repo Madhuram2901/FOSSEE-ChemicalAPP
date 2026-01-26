@@ -37,23 +37,23 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-app-bg">
             {/* Sidebar */}
             <Sidebar />
 
             {/* Main Content */}
             <div className="flex-1 overflow-auto">
                 {/* Header */}
-                <header className="bg-white border-b border-gray-100 px-8 py-6">
+                <header className="bg-app-surface border-b border-app-border px-8 py-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
+                            <h1 className="text-2xl font-bold text-content-main">
                                 Chemical Equipment Visualizer
                             </h1>
-                            <p className="text-gray-500 mt-1">CSV Analytics Dashboard</p>
+                            <p className="text-content-muted mt-1">CSV Analytics Dashboard</p>
                         </div>
                         <div className="flex items-center space-x-4">
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-content-muted">
                                 {new Date().toLocaleDateString('en-US', {
                                     weekday: 'long',
                                     year: 'numeric',
@@ -87,7 +87,7 @@ export default function Dashboard() {
                                 <StatCard
                                     title="Avg Flowrate"
                                     value={summary ? `${summary.averages.flowrate} m³/h` : "—"}
-                                    icon="💧"
+                                    icon=""
                                 />
                                 <StatCard
                                     title="Avg Pressure"
@@ -114,12 +114,12 @@ export default function Dashboard() {
 
                             {/* Empty State */}
                             {!summary && !loading && (
-                                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+                                <div className="bg-app-surface rounded-2xl shadow-sm border border-app-border p-12 text-center">
                                     <div className="text-6xl mb-4">📈</div>
-                                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                                    <h3 className="text-xl font-semibold text-content-main mb-2">
                                         No Data Yet
                                     </h3>
-                                    <p className="text-gray-500 max-w-md mx-auto">
+                                    <p className="text-content-muted max-w-md mx-auto">
                                         Upload a CSV file containing equipment data to see analytics,
                                         charts, and detailed breakdowns.
                                     </p>

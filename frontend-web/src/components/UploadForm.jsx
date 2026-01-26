@@ -36,11 +36,11 @@ export default function UploadForm({ onUpload, loading }) {
     };
 
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
+        <div className="bg-app-surface p-6 rounded-2xl shadow-sm border border-app-border h-fit">
             {/* Header */}
             <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Upload CSV</h3>
-                <p className="text-gray-500 text-sm mt-1">
+                <h3 className="text-lg font-semibold text-content-main">Upload CSV</h3>
+                <p className="text-content-muted text-sm mt-1">
                     Upload your equipment data file
                 </p>
             </div>
@@ -48,8 +48,8 @@ export default function UploadForm({ onUpload, loading }) {
             {/* Upload Area */}
             <div
                 className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${dragActive
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
+                    ? "border-primary bg-primary-light"
+                    : "border-app-border hover:border-gray-300"
                     }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -67,15 +67,15 @@ export default function UploadForm({ onUpload, loading }) {
                 <div className="text-4xl mb-3">📁</div>
 
                 {loading ? (
-                    <p className="text-blue-600 font-medium">Processing...</p>
+                    <p className="text-primary font-medium">Processing...</p>
                 ) : fileName ? (
-                    <p className="text-gray-700 font-medium">{fileName}</p>
+                    <p className="text-content-main font-medium">{fileName}</p>
                 ) : (
                     <>
-                        <p className="text-gray-700 font-medium">
+                        <p className="text-content-main font-medium">
                             Drop your CSV file here
                         </p>
-                        <p className="text-gray-400 text-sm mt-1">
+                        <p className="text-content-muted text-sm mt-1">
                             or click to browse
                         </p>
                     </>
@@ -83,9 +83,9 @@ export default function UploadForm({ onUpload, loading }) {
             </div>
 
             {/* Requirements */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-                <p className="text-sm font-medium text-gray-700 mb-2">Required columns:</p>
-                <ul className="text-xs text-gray-500 space-y-1">
+            <div className="mt-6 p-4 bg-app-bg rounded-xl">
+                <p className="text-sm font-medium text-content-main mb-2">Required columns:</p>
+                <ul className="text-xs text-content-muted space-y-1">
                     <li>• Equipment Name</li>
                     <li>• Type</li>
                     <li>• Flowrate</li>

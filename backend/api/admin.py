@@ -1,4 +1,8 @@
 from django.contrib import admin
+from .models import UploadedDataset
 
-# Register your models here.
-# Models will be registered in future PRs
+
+@admin.register(UploadedDataset)
+class UploadedDatasetAdmin(admin.ModelAdmin):
+    list_display = ('id', 'uploaded_at')
+    readonly_fields = ('summary',)

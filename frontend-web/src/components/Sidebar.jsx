@@ -1,6 +1,6 @@
 export default function Sidebar() {
     return (
-        <div className="w-20 bg-app-surface shadow-lg flex flex-col items-center py-6 space-y-8 border-r border-app-border">
+        <div className="w-20 bg-app-surface shadow-2xl flex flex-col items-center py-6 space-y-8">
             {/* Logo */}
             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
                 <span className="text-white text-xl font-bold">CE</span>

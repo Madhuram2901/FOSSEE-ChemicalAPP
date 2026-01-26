@@ -4,8 +4,8 @@ export default function DataTable({ rows }) {
     const columns = Object.keys(rows[0]);
 
     return (
-        <div className="bg-app-surface rounded-2xl shadow-sm border border-app-border overflow-hidden">
-            <div className="p-6 border-b border-app-border">
+        <div className="bg-app-surface rounded-2xl shadow-md overflow-hidden">
+            <div className="p-6">
                 <h3 className="text-lg font-semibold text-content-main">Equipment Data</h3>
                 <p className="text-content-muted text-sm mt-1">{rows.length} items</p>
             </div>
@@ -24,7 +24,7 @@ export default function DataTable({ rows }) {
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-app-border">
+                    <tbody>
                         {rows.map((row, i) => (
                             <tr key={i} className="hover:bg-app-bg transition-colors">
                                 {columns.map((col) => (

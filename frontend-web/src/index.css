@@ -8,7 +8,8 @@
   /* App/Background Colors */
   --color-app-bg: #CDB885;
   --color-app-surface: #EFE1B5;
-  --color-app-border: #000000;
+  --color-app-border: transparent;
+  /* Removed black borders */
 
   /* Metric Specific Colors */
   --color-flowrate: #10b981;

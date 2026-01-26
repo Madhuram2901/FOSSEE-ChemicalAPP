@@ -36,7 +36,7 @@ export default function UploadForm({ onUpload, loading }) {
     };
 
     return (
-        <div className="bg-app-surface p-6 rounded-2xl shadow-sm border border-app-border h-fit">
+        <div className="bg-app-surface p-6 rounded-2xl shadow-xl h-fit">
             {/* Header */}
             <div className="mb-6">
                 <h3 className="text-lg font-semibold text-content-main">Upload CSV</h3>
@@ -49,7 +49,7 @@ export default function UploadForm({ onUpload, loading }) {
             <div
                 className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${dragActive
                     ? "border-primary bg-primary-light"
-                    : "border-app-border hover:border-gray-300"
+                    : "border-gray-400 hover:border-primary"
                     }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}

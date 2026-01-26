@@ -107,7 +107,7 @@ export default function ChartSection({ data }) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Bar Chart */}
-            <div className="bg-app-surface p-6 rounded-2xl shadow-sm border border-app-border">
+            <div className="bg-app-surface p-6 rounded-2xl shadow-md">
                 <h3 className="text-lg font-semibold text-content-main mb-4">Average Parameters</h3>
                 <div className="h-64">
                     <Bar data={barData} options={barOptions} />
@@ -115,7 +115,7 @@ export default function ChartSection({ data }) {
             </div>
 
             {/* Pie Chart */}
-            <div className="bg-app-surface p-6 rounded-2xl shadow-sm border border-app-border">
+            <div className="bg-app-surface p-6 rounded-2xl shadow-md">
                 <h3 className="text-lg font-semibold text-content-main mb-4">Equipment Type Distribution</h3>
                 <div className="h-64">
                     <Pie data={pieData} options={pieOptions} />

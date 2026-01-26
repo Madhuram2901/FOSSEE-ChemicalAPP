@@ -54,7 +54,7 @@ export default function Dashboard() {
             {/* Main Content */}
             <div className="flex-1 overflow-auto">
                 {/* Header */}
-                <header className="bg-app-surface border-b border-app-border px-8 py-6">
+                <header className="bg-app-surface shadow-l px-8 py-6 z-10">
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-2xl font-bold text-content-main">
@@ -78,7 +78,7 @@ export default function Dashboard() {
                 {/* Content Area */}
                 <div className="p-8">
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 shadow-md">
                             <span className="font-medium">Error:</span> {error}
                         </div>
                     )}
@@ -123,7 +123,7 @@ export default function Dashboard() {
 
                             {/* Empty State */}
                             {!summary && !loading && (
-                                <div className="bg-app-surface rounded-2xl shadow-sm border border-app-border p-12 text-center">
+                                <div className="bg-app-surface rounded-2xl shadow-xl p-12 text-center">
                                     <div className="text-6xl mb-4">📈</div>
                                     <h3 className="text-xl font-semibold text-content-main mb-2">
                                         No Data Yet

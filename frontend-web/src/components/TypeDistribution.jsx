@@ -14,7 +14,7 @@ export default function TypeDistribution({ distribution }) {
     ];
 
     return (
-        <div className="bg-app-surface p-6 rounded-2xl shadow-sm border border-app-border">
+        <div className="bg-app-surface p-6 rounded-2xl shadow-md">
             <h3 className="text-lg font-semibold text-content-main mb-4">Equipment Types</h3>
 
             <div className="space-y-4">

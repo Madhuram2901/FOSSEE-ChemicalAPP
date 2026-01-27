@@ -1,9 +1,12 @@
-import { Bar, Pie } from "react-chartjs-2";
+import { useState } from "react";
+import { Bar, Pie, Line } from "react-chartjs-2";
 import {
     Chart as ChartJS,
     CategoryScale,
     LinearScale,
     BarElement,
+    PointElement,
+    LineElement,
     ArcElement,
     Tooltip,
     Legend,
@@ -13,17 +16,19 @@ ChartJS.register(
     CategoryScale,
     LinearScale,
     BarElement,
+    PointElement,
+    LineElement,
     ArcElement,
     Tooltip,
     Legend
 );
 
-const barColors = ["#10b981", "#f59e0b", "#ef4444"]; // flowrate, pressure, temperature
+const barColors = ["#10b981", "#f59e0b", "#ef4444"];
 const pieColors = [
-    "#2563eb", // primary
-    "#10b981", // flowrate
-    "#f59e0b", // pressure
-    "#ef4444", // temperature
+    "#2563eb",
+    "#10b981",
+    "#f59e0b",
+    "#ef4444",
     "#8b5cf6",
     "#ec4899",
     "#06b6d4",
@@ -31,22 +36,28 @@ const pieColors = [
 ];
 
 export default function ChartSection({ data }) {
+    const [chartType, setChartType] = useState("bar"); // 'bar' or 'line'
+
     if (!data) return null;
 
-    const barData = {
+    const avgData = {
         labels: ["Flowrate (m³/h)", "Pressure (bar)", "Temperature (°C)"],
         datasets: [
             {
                 label: "Average Values",
                 data: [data.averages.flowrate, data.averages.pressure, data.averages.temperature],
-                backgroundColor: barColors,
+                backgroundColor: chartType === "bar" ? barColors : "rgba(37, 99, 235, 0.1)",
+                borderColor: chartType === "line" ? "#2563eb" : "transparent",
+                borderWidth: 2,
                 borderRadius: 8,
                 barThickness: 40,
+                tension: 0.4,
+                fill: true,
             },
         ],
     };
 
-    const barOptions = {
+    const avgOptions = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -57,20 +68,12 @@ export default function ChartSection({ data }) {
         scales: {
             y: {
                 beginAtZero: true,
-                grid: {
-                    color: "#f1f5f9", // app-border
-                },
-                ticks: {
-                    color: "#64748b", // content-muted
-                },
+                grid: { color: "#f1f5f9" },
+                ticks: { color: "#64748b" },
             },
             x: {
-                grid: {
-                    display: false,
-                },
-                ticks: {
-                    color: "#64748b", // content-muted
-                },
+                grid: { display: false },
+                ticks: { color: "#64748b" },
             },
         },
     };
@@ -93,12 +96,10 @@ export default function ChartSection({ data }) {
             legend: {
                 position: "right",
                 labels: {
-                    color: "#0f172a", // content-main
+                    color: "#0f172a",
                     padding: 16,
                     usePointStyle: true,
-                    font: {
-                        size: 12,
-                    },
+                    font: { size: 12 },
                 },
             },
         },
@@ -106,17 +107,41 @@ export default function ChartSection({ data }) {
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Bar Chart */}
+            {/* Average Parameters Chart */}
             <div className="bg-app-surface p-6 rounded-2xl shadow-md">
-                <h3 className="text-lg font-semibold text-content-main mb-4">Average Parameters</h3>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-content-main">Average Parameters</h3>
+                    <div className="flex bg-app-bg p-1 rounded-lg">
+                        <button
+                            onClick={() => setChartType("bar")}
+                            className={`px-3 py-1 text-xs rounded-md transition-all ${chartType === "bar" ? "bg-primary text-white shadow-sm" : "text-content-muted"
+                                }`}
+                        >
+                            Bar
+                        </button>
+                        <button
+                            onClick={() => setChartType("line")}
+                            className={`px-3 py-1 text-xs rounded-md transition-all ${chartType === "line" ? "bg-primary text-white shadow-sm" : "text-content-muted"
+                                }`}
+                        >
+                            Line
+                        </button>
+                    </div>
+                </div>
                 <div className="h-64">
-                    <Bar data={barData} options={barOptions} />
+                    {chartType === "bar" ? (
+                        <Bar data={avgData} options={avgOptions} />
+                    ) : (
+                        <Line data={avgData} options={avgOptions} />
+                    )}
                 </div>
             </div>
 
             {/* Pie Chart */}
             <div className="bg-app-surface p-6 rounded-2xl shadow-md">
-                <h3 className="text-lg font-semibold text-content-main mb-4">Equipment Type Distribution</h3>
+                <h3 className="text-lg font-semibold text-content-main mb-4">
+                    Equipment Type Distribution
+                </h3>
                 <div className="h-64">
                     <Pie data={pieData} options={pieOptions} />
                 </div>
@@ -124,3 +149,4 @@ export default function ChartSection({ data }) {
         </div>
     );
 }
+

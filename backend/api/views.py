@@ -69,6 +69,11 @@ def history(request):
     """
     datasets = UploadedDataset.objects.order_by("-uploaded_at")[:5]
     return Response([
-        {"dataset_id": d.id, "uploaded_at": d.uploaded_at}
+        {
+            "id": d.id,
+            "filename": d.file.name.split("/")[-1] if d.file else "Unknown",
+            "uploaded_at": d.uploaded_at
+        }
         for d in datasets
     ])
+

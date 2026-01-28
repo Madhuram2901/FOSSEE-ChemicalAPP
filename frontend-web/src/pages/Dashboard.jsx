@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import StatCard from "../components/StatCard";
 import ChartSection from "../components/ChartSection";
@@ -31,14 +33,37 @@ export default function Dashboard() {
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
+    // Auth
+    const token = localStorage.getItem('auth_token');
+    const navigate = useNavigate();
+
     useEffect(() => {
+        if (!token) {
+            navigate('/login');
+            return;
+        }
         fetchHistory();
-    }, []);
+    }, [token, navigate]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        navigate('/login');
+    };
+
+    const getAuthHeaders = () => {
+        return {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        };
+    };
 
     const fetchHistory = async () => {
+        if (!token) return;
         setFetchingHistory(true);
         try {
-            const res = await axios.get(`${API}/history/`);
+            const res = await axios.get(`${API}/history/`, getAuthHeaders());
             setHistory(res.data);
             // If we have history and no current summary, load the latest one
             if (res.data.length > 0 && !summary) {
@@ -48,23 +73,31 @@ export default function Dashboard() {
             }
         } catch (err) {
             console.error("Failed to fetch history");
-            setError("Failed to fetch dataset history. Please try again.");
+            if (err.response && err.response.status === 401) {
+                handleLogout(); // Auto logout on 401
+            } else {
+                setError("Failed to fetch dataset history. Please try again.");
+            }
         } finally {
             setFetchingHistory(false);
         }
     };
 
     const handleSelectDataset = async (id) => {
-        if (!id) return;
+        if (!id || !token) return;
         setSelectedDatasetId(id);
         setLoading(true);
         setError(null);
         setSuccessMessage(null);
         try {
-            const res = await axios.get(`${API}/summary/${id}/`);
+            const res = await axios.get(`${API}/summary/${id}/`, getAuthHeaders());
             setSummary(res.data);
         } catch (err) {
-            setError("Failed to load dataset details");
+            if (err.response && err.response.status === 401) {
+                handleLogout();
+            } else {
+                setError("Failed to load dataset details");
+            }
         } finally {
             setLoading(false);
         }
@@ -72,6 +105,7 @@ export default function Dashboard() {
 
     const handleUpload = async (file) => {
         if (!file) return;
+        if (!token) return;
 
         setLoading(true);
         setError(null);
@@ -81,12 +115,17 @@ export default function Dashboard() {
         formData.append("file", file);
 
         try {
-            const res = await axios.post(`${API}/upload/`, formData);
+            const config = getAuthHeaders();
+            const res = await axios.post(`${API}/upload/`, formData, config);
             setSuccessMessage("File uploaded and processed successfully!");
             await fetchHistory(); // Refresh history
             await handleSelectDataset(res.data.dataset_id); // Load the new dataset
         } catch (err) {
-            setError(err.response?.data?.error || "Failed to upload file");
+            if (err.response && err.response.status === 401) {
+                handleLogout();
+            } else {
+                setError(err.response?.data?.error || "Failed to upload file");
+            }
         } finally {
             setLoading(false);
         }
@@ -112,7 +151,7 @@ export default function Dashboard() {
                             {loading && (
                                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary mr-4"></div>
                             )}
-                            <span className="text-sm text-content-muted">
+                            <span className="text-sm text-content-muted mr-4">
                                 {new Date().toLocaleDateString('en-US', {
                                     weekday: 'long',
                                     year: 'numeric',
@@ -120,6 +159,13 @@ export default function Dashboard() {
                                     day: 'numeric'
                                 })}
                             </span>
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                Sign Out
+                            </button>
                         </div>
                     </div>
                 </header>

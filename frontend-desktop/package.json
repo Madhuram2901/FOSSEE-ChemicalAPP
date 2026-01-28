@@ -1,0 +1,9 @@
+{
+    "name": "chemical-equipment-visualizer-desktop",
+    "version": "1.0.0",
+    "description": "Desktop frontend for Chemical Equipment Visualizer",
+    "scripts": {
+        "start": "C:\\Users\\Madhuram\\AppData\\Local\\Programs\\Python\\Python310\\python.exe main.py",
+        "dev": "C:\\Users\\Madhuram\\AppData\\Local\\Programs\\Python\\Python310\\python.exe main.py"
+    }
+}

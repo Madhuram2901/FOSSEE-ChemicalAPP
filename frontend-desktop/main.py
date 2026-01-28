@@ -1,0 +1,34 @@
+"""
+Chemical Equipment Visualizer - Desktop Application
+Main entry point for the PyQt5 desktop client
+"""
+import sys
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import Qt
+from ui import MainWindow
+
+
+def main():
+    """Main application entry point"""
+    # Enable high DPI scaling
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    
+    # Create application
+    app = QApplication(sys.argv)
+    app.setApplicationName("Chemical Equipment Visualizer")
+    app.setOrganizationName("FOSSEE")
+    
+    # Set application style
+    app.setStyle('Fusion')
+    
+    # Create and show main window
+    window = MainWindow()
+    window.show()
+    
+    # Run application
+    sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    main()

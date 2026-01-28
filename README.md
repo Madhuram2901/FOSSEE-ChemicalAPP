@@ -11,8 +11,15 @@ A hybrid Web + Desktop + Backend application for visualizing chemical equipment 
 | **Desktop Frontend** | Python, PyQt5, Matplotlib |
 | **Database** | SQLite (Development) |
 | **Data Processing** | Pandas |
+| **Styling** | Vanilla CSS (Web), PyQt5 Stylesheets (Desktop) |
 
-## Repository Structure
+## Features
+
+- **Multi-Platform**: Identical functionality across Web and Desktop interfaces.
+- **CSV Data Ingestion**: Robust upload and processing of equipment parameters.
+- **Dynamic Visualizations**: Real-time charts for data distributions and metrics.
+- **History Management**: Track and revisit previously uploaded datasets.
+- **Searchable Inventory**: Instant filtering of equipment lists.
 
 ```
 chemical-equipment-visualizer/
@@ -31,7 +38,7 @@ chemical-equipment-visualizer/
 │   └── package.json
 │
 ├── frontend-desktop/           # PyQt5 desktop application
-│   ├── app.py                  # Main desktop application
+│   ├── main.py                 # Main desktop application
 │   └── requirements.txt
 │
 ├── sample_equipment_data.csv   # Sample equipment data
@@ -126,7 +133,7 @@ chemical-equipment-visualizer/
 
 4. Run the desktop application:
    ```bash
-   python app.py
+   python main.py
    ```
 
 ## API Endpoints
@@ -134,6 +141,9 @@ chemical-equipment-visualizer/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/` | Health check - returns initialization status |
+| POST | `/api/upload/` | Upload CSV for processing |
+| GET | `/api/history/` | List most recent 5 datasets |
+| GET | `/api/summary/<id>/` | Get detailed summary and data table |
 
 ## License
 

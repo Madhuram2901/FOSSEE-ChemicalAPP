@@ -2,7 +2,8 @@
 Main Window - Primary application window
 """
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-                             QLabel, QMessageBox, QScrollArea, QFrame, QGridLayout)
+                             QLabel, QMessageBox, QScrollArea, QFrame, QGridLayout,
+                             QInputDialog, QLineEdit)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon
 from .widgets import StatCard, UploadPanel, HistoryPanel, ChartsContainer, DataTable
@@ -42,6 +43,9 @@ class APIWorker(QThread):
 class MainWindow(QMainWindow):
     """Main application window"""
     
+    # Signals
+    logout_requested = pyqtSignal()
+
     def __init__(self):
         """Initialize main window"""
         super().__init__()
@@ -133,7 +137,9 @@ class MainWindow(QMainWindow):
         
         title_layout.addWidget(title)
                 
-        # Right side - Loading indicator
+        # Right side - Loading indicator & Logout
+        right_layout = QHBoxLayout()
+        
         self.loading_label = QLabel("")
         self.loading_label.setStyleSheet("""
             color: #3b82f6;
@@ -141,9 +147,32 @@ class MainWindow(QMainWindow):
             font-weight: 600;
         """)
         
+        from PyQt5.QtWidgets import QPushButton
+        logout_btn = QPushButton("Sign Out")
+        logout_btn.setCursor(Qt.PointingHandCursor)
+        logout_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #FEF2F2;
+                color: #DC2626;
+                border: 1px solid #FECACA;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #FEE2E2;
+            }
+        """)
+        logout_btn.clicked.connect(self.logout_requested.emit)
+
+        right_layout.addWidget(self.loading_label)
+        right_layout.addSpacing(15)
+        right_layout.addWidget(logout_btn)
+        
         layout.addLayout(title_layout)
         layout.addStretch()
-        layout.addWidget(self.loading_label)
+        layout.addLayout(right_layout)
         
         header.setLayout(layout)
         return header
@@ -251,6 +280,7 @@ class MainWindow(QMainWindow):
         description.setStyleSheet("""
             color: #6b7280;
             font-size: 12px;
+            font-weight: 600;
         """)
         description.setAlignment(Qt.AlignCenter)
         
@@ -277,6 +307,16 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", message)
         else:
             QMessageBox.information(self, "Success", message)
+
+    def _handle_auth_error(self):
+        """Handle authentication error"""
+        token, ok = QInputDialog.getText(self, "Authentication Required", 
+                                       "Please enter your API Token:", QLineEdit.Normal, "")
+        if ok and token:
+            self.api_client.save_token(token)
+            self._load_history()
+            return True
+        return False
     
     def _load_initial_data(self):
         """Load initial data on startup"""
@@ -323,6 +363,9 @@ class MainWindow(QMainWindow):
     def _on_history_error(self, error):
         """Handle history error"""
         self._set_loading(False)
+        if "Authentication failed" in str(error):
+            if self._handle_auth_error():
+                return
         self._show_message(f"Failed to load history: {error}", is_error=True)
     
     def _handle_upload(self, file_path: str):
@@ -352,6 +395,9 @@ class MainWindow(QMainWindow):
     def _on_upload_error(self, error):
         """Handle upload error"""
         self._set_loading(False)
+        if "Authentication failed" in str(error):
+            if self._handle_auth_error():
+                return
         self._show_message(f"Upload failed: {error}", is_error=True)
     
     def _handle_dataset_selected(self, dataset_id: int):
@@ -382,6 +428,9 @@ class MainWindow(QMainWindow):
     def _on_summary_error(self, error):
         """Handle summary error"""
         self._set_loading(False)
+        if "Authentication failed" in str(error):
+             if self._handle_auth_error():
+                return
         self._show_message(f"Failed to load dataset: {error}", is_error=True)
     
     def _update_ui_with_data(self, data: dict):

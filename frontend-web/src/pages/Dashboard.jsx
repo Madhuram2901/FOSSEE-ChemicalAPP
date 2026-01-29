@@ -186,7 +186,7 @@ export default function Dashboard() {
     }, [isCompareMode, compareIdA, compareIdB]);
 
     return (
-        <div className="flex h-screen bg-app-bg">
+        <div className="flex min-h-screen bg-app-bg">
             {/* Sidebar */}
             <Sidebar />
 

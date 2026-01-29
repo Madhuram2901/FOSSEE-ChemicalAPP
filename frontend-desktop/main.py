@@ -10,10 +10,13 @@ from ui.auth_window import LoginWindow, SignupWindow
 from api import APIClient
 
 
+from config import API_BASE_URL
+
+
 class AppController:
     """Manages application flow"""
     def __init__(self):
-        self.api_client = APIClient()
+        self.api_client = APIClient(base_url=API_BASE_URL)
         self.login_window = None
         self.signup_window = None
         self.main_window = None

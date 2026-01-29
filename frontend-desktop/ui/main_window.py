@@ -53,6 +53,13 @@ class MainWindow(QMainWindow):
         self.current_summary = None
         self.current_dataset_id = None
         self.active_workers = []  # Track active worker threads
+        
+        # Comparison State
+        self.is_compare_mode = False
+        self.compare_id_a = None
+        self.compare_id_b = None
+        self.compare_data = None
+        
         self._setup_ui()
         self._load_initial_data()
     
@@ -164,10 +171,51 @@ class MainWindow(QMainWindow):
                 background-color: #FEE2E2;
             }
         """)
+        export_btn = QPushButton("Export PDF")
+        export_btn.setCursor(Qt.PointingHandCursor)
+        export_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #3b82f6;
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #2563eb;
+            }
+        """)
+        export_btn.clicked.connect(self._handle_export_pdf)
+
         logout_btn.clicked.connect(self.logout_requested.emit)
 
         right_layout.addWidget(self.loading_label)
         right_layout.addSpacing(15)
+
+        # Mode Toggles
+        self.mode_btn = QPushButton("Compare Mode")
+        self.mode_btn.setCheckable(True)
+        self.mode_btn.setCursor(Qt.PointingHandCursor)
+        self.mode_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #6B7280;
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 11px;
+            }
+            QPushButton:checked {
+                background-color: #7C3AED;
+            }
+        """)
+        self.mode_btn.toggled.connect(self._toggle_mode)
+        right_layout.addWidget(self.mode_btn)
+        
+        right_layout.addWidget(export_btn)  # Added Export Button
+        right_layout.addSpacing(10)
         right_layout.addWidget(logout_btn)
         
         layout.addLayout(title_layout)
@@ -450,7 +498,138 @@ class MainWindow(QMainWindow):
         self.charts_container.update_charts(data)
         
         # Update table
-        self.data_table.set_data(data['table'])
+        if 'table' in data:
+            self.data_table.set_data(data['table'])
+            
+    def _handle_export_pdf(self):
+        """Handle PDF export"""
+        if not self.current_dataset_id:
+            QMessageBox.warning(self, "No Dataset", "Please select a dataset first.")
+            return
+
+        from PyQt5.QtWidgets import QFileDialog
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save Report", f"report_{self.current_dataset_id}.pdf", "PDF Files (*.pdf)"
+        )
+
+        if not file_path:
+            return
+
+        self._set_loading(True, "Generating PDF...")
+        worker = APIWorker(self.api_client.download_report, self.current_dataset_id, file_path)
+        worker.finished.connect(self._on_export_success)
+        worker.finished.connect(lambda: self._cleanup_worker(worker))
+        worker.error.connect(self._on_export_error)
+        worker.error.connect(lambda: self._cleanup_worker(worker))
+        worker.start()
+        self.active_workers.append(worker)
+
+    def _on_export_success(self, result):
+        self._set_loading(False)
+        self._show_message("PDF Report saved successfully!")
+
+    def _on_export_error(self, error):
+        self._set_loading(False)
+        self._show_message(f"Failed to export PDF: {error}", is_error=True)
+
+    def _toggle_mode(self, checked):
+        """Toggle between Single and Compare mode"""
+        self.is_compare_mode = checked
+        if checked:
+            self.mode_btn.setText("Exit Compare")
+            # Clear main view
+            self.charts_container.hide()
+            self.data_table.hide()
+            self.stat_total.set_value("Select Datasets")
+            self.stat_flowrate.set_value("to Compare")
+            self.stat_pressure.set_value("-")
+            self.stat_temperature.set_value("-")
+            
+            QMessageBox.information(self, "Comparison Mode", 
+                "Comparison Mode Enabled.\n\nPlease select TWO datasets from the History list (right click or use dropdowns if implemented, but here we will implement a dialog).")
+            
+            self._prompt_comparison_selection()
+            
+        else:
+            self.mode_btn.setText("Compare Mode")
+            # Restore single view if data exists
+            if self.current_summary:
+                self._update_ui_with_data(self.current_summary)
+
+    def _prompt_comparison_selection(self):
+        """Simple dialog to pick two IDs (MVP approach)"""
+        if not self.history_panel.history_data:
+            return
+            
+        history = self.history_panel.history_data
+        items = [f"{d['id']}: {d['original_filename']}" for d in history]
+        
+        ok = False
+        item_a, ok = QInputDialog.getItem(self, "Select Dataset A", "Baseline Dataset:", items, 0, False)
+        if not ok: return
+        
+        item_b, ok = QInputDialog.getItem(self, "Select Dataset B", "Comparison Dataset:", items, 0, False)
+        if not ok: return
+        
+        id_a = int(item_a.split(":")[0])
+        id_b = int(item_b.split(":")[0])
+        
+        if id_a == id_b:
+            QMessageBox.warning(self, "Error", "Please select different datasets.")
+            return
+            
+        self._start_comparison(id_a, id_b)
+
+    def _start_comparison(self, id_a, id_b):
+        self._set_loading(True, "Comparing...")
+        worker = APIWorker(self.api_client.compare_datasets, id_a, id_b)
+        worker.finished.connect(self._on_comparison_loaded)
+        worker.finished.connect(lambda: self._cleanup_worker(worker))
+        worker.error.connect(self._on_summary_error) # Reuse error handler
+        worker.error.connect(lambda: self._cleanup_worker(worker))
+        worker.start()
+        self.active_workers.append(worker)
+
+    def _on_comparison_loaded(self, data):
+        self._set_loading(False)
+        self.compare_data = data
+        
+        # Update Text Stats to show Deltas
+        d = data['delta']
+        stats = data['comparison_stats']
+
+        self.stat_total.set_value(f"Δ {d['total_equipment']}")
+        self.stat_flowrate.set_value(f"Δ {d['averages']['flowrate']}")
+        self.stat_pressure.set_value(f"Δ {d['averages']['pressure']}")
+        self.stat_temperature.set_value(f"Δ {d['averages']['temperature']}")
+        
+        # Format advanced stats message
+        msg = (f"Comparison Complete!\n\n"
+               f"Dataset A: {data['dataset_a']['filename']}\n"
+               f"Dataset B: {data['dataset_b']['filename']}\n\n"
+               f"--- BASIC DELTAS ---\n"
+               f"Equipment Difference: {d['total_equipment']}\n"
+               f"Flowrate Difference: {d['averages']['flowrate']}\n"
+               f"Pressure Difference: {d['averages']['pressure']}\n\n"
+               f"--- STATISTICAL ANALYSIS ---\n"
+               f"FLOWRATE:\n"
+               f"  Change: {stats['flowrate']['percent_change']}%\n"
+               f"  Risk: {stats['flowrate']['risk_level'].upper()}\n"
+               f"  Stability: {stats['flowrate']['stability']}\n"
+               f"  Effect Size: {stats['flowrate']['effect_size']}\n\n"
+               f"PRESSURE:\n"
+               f"  Change: {stats['pressure']['percent_change']}%\n"
+               f"  Risk: {stats['pressure']['risk_level'].upper()}\n"
+               f"  Stability: {stats['pressure']['stability']}\n"
+               f"  Effect Size: {stats['pressure']['effect_size']}\n\n"
+               f"TEMPERATURE:\n"
+               f"  Change: {stats['temperature']['percent_change']}%\n"
+               f"  Risk: {stats['temperature']['risk_level'].upper()}\n"
+               f"  Stability: {stats['temperature']['stability']}\n"
+               f"  Effect Size: {stats['temperature']['effect_size']}")
+        
+        QMessageBox.information(self, "Detailed Comparison Result", msg)
+
     
     def _cleanup_worker(self, worker):
         """Remove finished worker from active workers list"""

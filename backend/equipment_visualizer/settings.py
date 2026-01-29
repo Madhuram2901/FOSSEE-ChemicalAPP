@@ -111,13 +111,11 @@ CORS_ALLOW_ALL_ORIGINS = True # Allow all for simplicity in this demo environmen
 # CORS_ALLOWED_ORIGINS = [
 #     'http://localhost:5173',
 #     'http://127.0.0.1:5173',
+#     'http://localhost:5174',
+#     'http://127.0.0.1:5174',
+#     'http://localhost:5175',
+#     'http://127.0.0.1:5175',
 # ]
-
-CSRF_TRUSTED_ORIGINS = [
-    'https://*.railway.app',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173'
-]
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

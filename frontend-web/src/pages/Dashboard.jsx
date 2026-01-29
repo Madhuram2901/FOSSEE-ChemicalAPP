@@ -20,7 +20,9 @@ import temperatureIcon from "../assets/temperature.png";
 // Pressure: https://www.flaticon.com/free-icons/pressure
 // Temperature: Provided by user (via Flaticon)
 
-const API = "http://localhost:8000/api";
+import { API_BASE_URL } from "../config";
+
+const API = API_BASE_URL;
 
 export default function Dashboard() {
     const [summary, setSummary] = useState(null);

@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon
 from .widgets import StatCard, UploadPanel, HistoryPanel, ChartsContainer, DataTable
+from config import API_BASE_URL
 from api import APIClient
 
 
@@ -39,7 +40,6 @@ class APIWorker(QThread):
         except Exception as e:
             self.error.emit(str(e))
 
-
 class MainWindow(QMainWindow):
     """Main application window"""
     
@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         """Initialize main window"""
         super().__init__()
-        self.api_client = APIClient()
+        self.api_client = APIClient(base_url=API_BASE_URL)
         self.current_summary = None
         self.current_dataset_id = None
         self.active_workers = []  # Track active worker threads

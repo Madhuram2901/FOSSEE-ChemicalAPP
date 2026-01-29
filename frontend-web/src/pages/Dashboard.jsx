@@ -20,9 +20,7 @@ import temperatureIcon from "../assets/temperature.png";
 // Pressure: https://www.flaticon.com/free-icons/pressure
 // Temperature: Provided by user (via Flaticon)
 
-import { API_BASE_URL } from "../config";
-
-const API = API_BASE_URL;
+const API = "http://localhost:8000/api";
 
 export default function Dashboard() {
     const [summary, setSummary] = useState(null);
@@ -186,7 +184,7 @@ export default function Dashboard() {
     }, [isCompareMode, compareIdA, compareIdB]);
 
     return (
-        <div className="flex min-h-screen bg-app-bg">
+        <div className="flex h-screen bg-app-bg">
             {/* Sidebar */}
             <Sidebar />
 

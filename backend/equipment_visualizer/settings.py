@@ -64,15 +64,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'equipment_visualizer.wsgi.application'
 
-import dj_database_url
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
-        conn_max_age=600    
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # Password validation
@@ -108,14 +106,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True # Allow all for simplicity in this demo environment, but restrict in real prod if known
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost:5173',
-#     'http://127.0.0.1:5173',
-#     'http://localhost:5174',
-#     'http://127.0.0.1:5174',
-#     'http://localhost:5175',
-#     'http://127.0.0.1:5175',
-# ]
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
+    'http://localhost:5175',
+    'http://127.0.0.1:5175',
+]
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

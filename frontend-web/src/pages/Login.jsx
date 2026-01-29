@@ -4,9 +4,7 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { ArrowRight, Lock, User, AlertCircle, Beaker } from 'lucide-react';
 
-import { API_BASE_URL } from '../config';
-
-const API = API_BASE_URL;
+const API = "http://localhost:8000/api";
 
 export default function Login() {
     const [username, setUsername] = useState('');

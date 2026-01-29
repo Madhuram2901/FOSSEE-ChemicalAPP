@@ -81,6 +81,9 @@ def upload_csv(request):
     })
 
 
+from django.http import FileResponse
+from .reports import generate_pdf_report
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def summary(request, dataset_id):
@@ -93,6 +96,49 @@ def summary(request, dataset_id):
         return Response({"error": "Dataset not found"}, status=404)
 
     return Response(dataset.summary)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def download_report(request, dataset_id):
+    """
+    Generate and download PDF report for a dataset
+    """
+    try:
+        dataset = UploadedDataset.objects.get(id=dataset_id)
+    except UploadedDataset.DoesNotExist:
+        return Response({"error": "Dataset not found"}, status=404)
+
+    pdf_buffer = generate_pdf_report(dataset)
+    
+    response = FileResponse(pdf_buffer, as_attachment=True, filename=f"report_{dataset.id}.pdf")
+    return response
+
+
+from .comparison import compare_datasets
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def compare_datasets_view(request):
+    """
+    Compare two datasets
+    """
+    id_a = request.GET.get('dataset_a')
+    id_b = request.GET.get('dataset_b')
+
+    if not id_a or not id_b:
+        return Response({"error": "Both dataset_a and dataset_b parameters are required"}, status=400)
+
+    try:
+        dataset_a = UploadedDataset.objects.get(id=id_a)
+        dataset_b = UploadedDataset.objects.get(id=id_b)
+    except UploadedDataset.DoesNotExist:
+        return Response({"error": "One or both datasets not found"}, status=404)
+    except ValueError:
+        return Response({"error": "Invalid ID format"}, status=400)
+
+    result = compare_datasets(dataset_a, dataset_b)
+    return Response(result)
 
 
 @api_view(["GET"])

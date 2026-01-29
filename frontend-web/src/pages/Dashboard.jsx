@@ -33,6 +33,12 @@ export default function Dashboard() {
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
+    // Comparison Mode State
+    const [isCompareMode, setIsCompareMode] = useState(false);
+    const [compareIdA, setCompareIdA] = useState('');
+    const [compareIdB, setCompareIdB] = useState('');
+    const [compareData, setCompareData] = useState(null);
+
     // Auth
     const token = localStorage.getItem('auth_token');
     const navigate = useNavigate();
@@ -131,6 +137,52 @@ export default function Dashboard() {
         }
     };
 
+    const handleDownloadReport = async () => {
+        if (!selectedDatasetId || !token) return;
+
+        try {
+            const response = await axios.get(`${API}/report/${selectedDatasetId}/`, {
+                headers: { Authorization: `Bearer ${token}` },
+                responseType: 'blob',
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `report_${selectedDatasetId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            if (err.response && err.response.status === 401) {
+                handleLogout();
+            } else {
+                setError("Failed to download report");
+            }
+        }
+    };
+
+    const fetchComparison = async () => {
+        if (!compareIdA || !compareIdB || !token) return;
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await axios.get(`${API}/compare/?dataset_a=${compareIdA}&dataset_b=${compareIdB}`, getAuthHeaders());
+            setCompareData(res.data);
+        } catch (err) {
+            setError("Failed to fetch comparison data.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Effect to auto-fetch comparison when both IDs selected
+    useEffect(() => {
+        if (isCompareMode && compareIdA && compareIdB) {
+            fetchComparison();
+        }
+    }, [isCompareMode, compareIdA, compareIdB]);
+
     return (
         <div className="flex h-screen bg-app-bg">
             {/* Sidebar */}
@@ -159,6 +211,31 @@ export default function Dashboard() {
                                     day: 'numeric'
                                 })}
                             </span>
+
+                            <div className="flex items-center gap-2 mr-4 bg-white/50 p-1 rounded-lg">
+                                <button
+                                    onClick={() => setIsCompareMode(false)}
+                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${!isCompareMode ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    Single
+                                </button>
+                                <button
+                                    onClick={() => setIsCompareMode(true)}
+                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${isCompareMode ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    Compare
+                                </button>
+                            </div>
+
+                            {summary && !isCompareMode && (
+                                <button
+                                    onClick={handleDownloadReport}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors mr-2"
+                                >
+                                    Download Report
+                                </button>
+                            )}
+
                             <button
                                 onClick={handleLogout}
                                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
@@ -201,96 +278,242 @@ export default function Dashboard() {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Left & Center Content */}
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* Stats Row */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                                <StatCard
-                                    title="Total Equipment"
-                                    value={summary ? `${summary.total_equipment} units` : "—"}
-                                    icon={<img src={chemistryIcon} alt="Chemistry" className="w-12 h-12 object-contain" />}
-                                />
-                                <StatCard
-                                    title="Avg Flowrate"
-                                    value={summary ? `${summary.averages.flowrate} m³/h` : "—"}
-                                    icon={<img src={flowrateIcon} alt="Flowrate" className="w-9 h-9 object-contain" />}
-                                />
-                                <StatCard
-                                    title="Avg Pressure"
-                                    value={summary ? `${summary.averages.pressure} bar` : "—"}
-                                    icon={<img src={pressureIcon} alt="Pressure" className="w-12 h-12 object-contain" />}
-                                />
-                                <StatCard
-                                    title="Avg Temperature"
-                                    value={summary ? `${summary.averages.temperature} °C` : "—"}
-                                    icon={<img src={temperatureIcon} alt="Temperature" className="w-9 h-9 object-contain" />}
-                                />
-                            </div>
-
-                            {/* Chart visibility controls */}
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div className="text-sm text-content-muted">
-                                    Toggle analytics views to focus on what matters for this dataset.
+                    {isCompareMode ? (
+                        /* --- COMPARISON MODE --- */
+                        <div className="space-y-6">
+                            {/* Comparison Selectors */}
+                            <div className="grid grid-cols-2 gap-8">
+                                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Dataset A (Baseline)</label>
+                                    <select
+                                        value={compareIdA}
+                                        onChange={(e) => setCompareIdA(e.target.value)}
+                                        className="w-full p-2 border rounded-lg"
+                                    >
+                                        <option value="">Select Dataset A...</option>
+                                        {history.map(d => (
+                                            <option key={d.id} value={d.id} disabled={d.id == compareIdB}>
+                                                {d.original_filename} (ID: {d.id})
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
-                                <div className="flex flex-wrap gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowAveragesChart((prev) => !prev)}
-                                        className={`px-3 py-1 text-xs rounded-lg border text-content-main transition-colors ${showAveragesChart ? "bg-app-bg border-primary" : "bg-app-bg border-gray-300"
-                                            }`}
+                                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Dataset B (Comparison)</label>
+                                    <select
+                                        value={compareIdB}
+                                        onChange={(e) => setCompareIdB(e.target.value)}
+                                        className="w-full p-2 border rounded-lg"
                                     >
-                                        {showAveragesChart ? "Hide" : "Show"} Averages Chart
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowTypeDistributionChart((prev) => !prev)}
-                                        className={`px-3 py-1 text-xs rounded-lg border text-content-main transition-colors ${showTypeDistributionChart ? "bg-app-bg border-primary" : "bg-app-bg border-gray-300"
-                                            }`}
-                                    >
-                                        {showTypeDistributionChart ? "Hide" : "Show"} Type Distribution
-                                    </button>
+                                        <option value="">Select Dataset B...</option>
+                                        {history.map(d => (
+                                            <option key={d.id} value={d.id} disabled={d.id == compareIdA}>
+                                                {d.original_filename} (ID: {d.id})
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 
-                            {/* Charts */}
-                            {summary && showAveragesChart && <ChartSection data={summary} />}
+                            {/* Comparison View */}
+                            {compareData && (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {/* A Stats */}
+                                        <div className="bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
+                                            <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">Dataset A: {compareData.dataset_a.filename}</h3>
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-500">Equipment</span>
+                                                    <span className="font-bold text-xl">{compareData.dataset_a.summary.total_equipment}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-500">Flowrate</span>
+                                                    <span className="font-bold text-lg">{compareData.dataset_a.summary.averages.flowrate}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-500">Pressure</span>
+                                                    <span className="font-bold text-lg">{compareData.dataset_a.summary.averages.pressure}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-500">Temp</span>
+                                                    <span className="font-bold text-lg">{compareData.dataset_a.summary.averages.temperature}</span>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                            {/* Type Distribution */}
-                            {summary && showTypeDistributionChart && (
-                                <TypeDistribution distribution={summary.type_distribution} />
+                                        {/* Delta Stats / Analysis */}
+                                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 shadow-inner flex flex-col justify-center">
+                                            <h3 className="font-bold text-lg text-center text-gray-800 mb-6">Advanced Analysis (B vs A)</h3>
+
+                                            {/* Flowrate Analysis */}
+                                            <div className="mb-4">
+                                                <div className="flex justify-between items-center px-4 mb-1">
+                                                    <span className="font-semibold text-gray-700">Flowrate</span>
+                                                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase ${compareData.comparison_stats.flowrate.risk_level === 'critical' ? 'bg-red-100 text-red-700' :
+                                                        compareData.comparison_stats.flowrate.risk_level === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                                                        {compareData.comparison_stats.flowrate.risk_level}
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 px-4">
+                                                    <div>Change: <span className="font-mono text-gray-800">{compareData.comparison_stats.flowrate.percent_change}%</span></div>
+                                                    <div>Effect: <span className="font-mono text-gray-800">{compareData.comparison_stats.flowrate.effect_size}</span></div>
+                                                    <div>Stability: <span className={`font-mono ${compareData.comparison_stats.flowrate.stability === 'unstable' ? 'text-orange-600' : 'text-green-600'}`}>{compareData.comparison_stats.flowrate.stability}</span></div>
+                                                </div>
+                                            </div>
+
+                                            {/* Pressure Analysis */}
+                                            <div className="mb-4 border-t pt-3">
+                                                <div className="flex justify-between items-center px-4 mb-1">
+                                                    <span className="font-semibold text-gray-700">Pressure</span>
+                                                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase ${compareData.comparison_stats.pressure.risk_level === 'critical' ? 'bg-red-100 text-red-700' :
+                                                        compareData.comparison_stats.pressure.risk_level === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                                                        {compareData.comparison_stats.pressure.risk_level}
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 px-4">
+                                                    <div>Change: <span className="font-mono text-gray-800">{compareData.comparison_stats.pressure.percent_change}%</span></div>
+                                                    <div>Effect: <span className="font-mono text-gray-800">{compareData.comparison_stats.pressure.effect_size}</span></div>
+                                                    <div>Stability: <span className={`font-mono ${compareData.comparison_stats.pressure.stability === 'unstable' ? 'text-orange-600' : 'text-green-600'}`}>{compareData.comparison_stats.pressure.stability}</span></div>
+                                                </div>
+                                            </div>
+
+                                            {/* Temperature Analysis */}
+                                            <div className="border-t pt-3">
+                                                <div className="flex justify-between items-center px-4 mb-1">
+                                                    <span className="font-semibold text-gray-700">Temperature</span>
+                                                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase ${compareData.comparison_stats.temperature.risk_level === 'critical' ? 'bg-red-100 text-red-700' :
+                                                        compareData.comparison_stats.temperature.risk_level === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                                                        {compareData.comparison_stats.temperature.risk_level}
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 px-4">
+                                                    <div>Change: <span className="font-mono text-gray-800">{compareData.comparison_stats.temperature.percent_change}%</span></div>
+                                                    <div>Effect: <span className="font-mono text-gray-800">{compareData.comparison_stats.temperature.effect_size}</span></div>
+                                                    <div>Stability: <span className={`font-mono ${compareData.comparison_stats.temperature.stability === 'unstable' ? 'text-orange-600' : 'text-green-600'}`}>{compareData.comparison_stats.temperature.stability}</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* B Stats */}
+                                        <div className="bg-white p-6 rounded-xl border border-green-100 shadow-sm">
+                                            <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">Dataset B: {compareData.dataset_b.filename}</h3>
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-500">Equipment</span>
+                                                    <span className="font-bold text-xl">{compareData.dataset_b.summary.total_equipment}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-500">Flowrate</span>
+                                                    <span className="font-bold text-lg">{compareData.dataset_b.summary.averages.flowrate}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-500">Pressure</span>
+                                                    <span className="font-bold text-lg">{compareData.dataset_b.summary.averages.pressure}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-500">Temp</span>
+                                                    <span className="font-bold text-lg">{compareData.dataset_b.summary.averages.temperature}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
                             )}
-
-                            {/* Data Table */}
-                            {summary && <DataTable rows={summary.table} />}
-
-                            {/* Empty State */}
-                            {!summary && !loading && (
-                                <div className="bg-app-surface rounded-2xl shadow-xl p-12 text-center">
-                                    <div className="text-6xl mb-4">📈</div>
-                                    <h3 className="text-xl font-semibold text-content-main mb-2">
-                                        No Data Yet
-                                    </h3>
-                                    <p className="text-content-muted max-w-md mx-auto">
-                                        Upload a CSV file containing equipment data to see analytics,
-                                        charts, and detailed breakdowns.
-                                    </p>
+                        </div>
+                    ) : (
+                        /* --- NORMAL MODE (Existing Layout) --- */
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Left & Center Content */}
+                            <div className="lg:col-span-2 space-y-6">
+                                {/* Stats Row */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                                    <StatCard
+                                        title="Total Equipment"
+                                        value={summary ? `${summary.total_equipment} units` : "—"}
+                                        icon={<img src={chemistryIcon} alt="Chemistry" className="w-12 h-12 object-contain" />}
+                                    />
+                                    <StatCard
+                                        title="Avg Flowrate"
+                                        value={summary ? `${summary.averages.flowrate} m³/h` : "—"}
+                                        icon={<img src={flowrateIcon} alt="Flowrate" className="w-9 h-9 object-contain" />}
+                                    />
+                                    <StatCard
+                                        title="Avg Pressure"
+                                        value={summary ? `${summary.averages.pressure} bar` : "—"}
+                                        icon={<img src={pressureIcon} alt="Pressure" className="w-12 h-12 object-contain" />}
+                                    />
+                                    <StatCard
+                                        title="Avg Temperature"
+                                        value={summary ? `${summary.averages.temperature} °C` : "—"}
+                                        icon={<img src={temperatureIcon} alt="Temperature" className="w-9 h-9 object-contain" />}
+                                    />
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Right Sidebar - Upload Form & History */}
-                        <div className="lg:col-span-1">
-                            <UploadForm onUpload={handleUpload} loading={loading} />
-                            <HistoryList
-                                history={history}
-                                onSelect={handleSelectDataset}
-                                currentId={summary?.id}
-                                loading={loading}
-                                fetching={fetchingHistory}
-                            />
+                                {/* Chart visibility controls */}
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <div className="text-sm text-content-muted">
+                                        Toggle analytics views to focus on what matters for this dataset.
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAveragesChart((prev) => !prev)}
+                                            className={`px-3 py-1 text-xs rounded-lg border text-content-main transition-colors ${showAveragesChart ? "bg-app-bg border-primary" : "bg-app-bg border-gray-300"
+                                                }`}
+                                        >
+                                            {showAveragesChart ? "Hide" : "Show"} Averages Chart
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowTypeDistributionChart((prev) => !prev)}
+                                            className={`px-3 py-1 text-xs rounded-lg border text-content-main transition-colors ${showTypeDistributionChart ? "bg-app-bg border-primary" : "bg-app-bg border-gray-300"
+                                                }`}
+                                        >
+                                            {showTypeDistributionChart ? "Hide" : "Show"} Type Distribution
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Charts */}
+                                {summary && showAveragesChart && <ChartSection data={summary} />}
+
+                                {/* Type Distribution */}
+                                {summary && showTypeDistributionChart && (
+                                    <TypeDistribution distribution={summary.type_distribution} />
+                                )}
+
+                                {/* Data Table */}
+                                {summary && <DataTable rows={summary.table} />}
+
+                                {/* Empty State */}
+                                {!summary && !loading && (
+                                    <div className="bg-app-surface rounded-2xl shadow-xl p-12 text-center">
+                                        <div className="text-6xl mb-4">📈</div>
+                                        <h3 className="text-xl font-semibold text-content-main mb-2">
+                                            No Data Yet
+                                        </h3>
+                                        <p className="text-content-muted max-w-md mx-auto">
+                                            Upload a CSV file containing equipment data to see analytics,
+                                            charts, and detailed breakdowns.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Right Sidebar - Upload Form & History */}
+                            <div className="lg:col-span-1">
+                                <UploadForm onUpload={handleUpload} loading={loading} />
+                                <HistoryList
+                                    history={history}
+                                    onSelect={handleSelectDataset}
+                                    currentId={summary?.id}
+                                    loading={loading}
+                                    fetching={fetchingHistory}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>

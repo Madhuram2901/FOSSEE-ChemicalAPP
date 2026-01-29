@@ -186,3 +186,33 @@ class APIClient:
             return response.status_code in [200, 401]
         except:
             return False
+
+    def download_report(self, dataset_id: int, save_path: str):
+        """
+        Download PDF report for a dataset
+        """
+        url = f"{self.base_url}/report/{dataset_id}/"
+        try:
+            response = requests.get(url, headers=self._get_headers(), stream=True, timeout=self.timeout)
+            response.raise_for_status()
+            with open(save_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        except Exception as e:
+            if hasattr(e, 'response') and e.response:
+                raise Exception(f"Download failed: {e.response.text}")
+            raise Exception(f"Download failed: {e}")
+
+    def compare_datasets(self, id_a: int, id_b: int) -> dict:
+        """
+        Compare two datasets
+        """
+        url = f"{self.base_url}/compare/?dataset_a={id_a}&dataset_b={id_b}"
+        try:
+            response = requests.get(url, headers=self._get_headers(), timeout=self.timeout)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            if hasattr(e, 'response') and e.response:
+                raise Exception(f"Comparison failed: {e.response.text}")
+            raise Exception(f"Comparison failed: {e}")

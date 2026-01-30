@@ -10,7 +10,7 @@ export default function StatCard({ title, value, subtitle, icon }) {
                     )}
                 </div>
                 {icon && (
-                    <div className="w-65 h-65 bg-primary-light rounded-2xl flex items-center justify-center">
+                    <div className="w-14 h-14 bg-primary-light rounded-2xl flex items-center justify-center">
                         <span className="text-2xl">{icon}</span>
                     </div>
                 )}

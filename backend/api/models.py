@@ -5,6 +5,7 @@ class UploadedDataset(models.Model):
     file = models.FileField(upload_to="datasets/")
     original_filename = models.CharField(max_length=255, blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True)
     summary = models.JSONField()
 
     def __str__(self):

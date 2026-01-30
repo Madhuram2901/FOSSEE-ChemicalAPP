@@ -48,6 +48,8 @@ chemical-equipment-visualizer/
 
 ## Setup Instructions
 
+For production deployment details, please see the [Deployment Guide](DEPLOYMENT.md).
+
 ### Prerequisites
 
 - Python 3.10+

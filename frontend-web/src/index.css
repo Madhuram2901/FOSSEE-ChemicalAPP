@@ -22,18 +22,20 @@
 }
 
 /* Normalized Reset */
+/* Normalized Reset for Boundaries */
 html,
 body,
 #root {
   width: 100%;
   height: 100%;
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
+/* Restore the spacing preference but keep box-sizing */
 * {
-  margin: 0;
-  padding: 0;
+  margin: 5px;
+  padding: 5px;
   box-sizing: border-box;
 }
 
@@ -43,6 +45,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #CDB885;
+  line-height: 1.6;
   @apply bg-app-bg text-content-main;
 }
 

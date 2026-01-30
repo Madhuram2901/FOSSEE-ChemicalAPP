@@ -21,9 +21,19 @@
   --color-content-muted: #000000;
 }
 
+/* Normalized Reset */
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 * {
-  margin: 5;
-  padding: 5;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -32,6 +42,7 @@ body {
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #CDB885;
   @apply bg-app-bg text-content-main;
 }
 

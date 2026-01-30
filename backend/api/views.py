@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.models import User
@@ -40,8 +41,13 @@ def api_root(request):
     })
 
 
+from django.core.exceptions import ValidationError
+from .validators.csv_validator import validate_csv_file
+
+from .services.dataset_service import handle_upload
+
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def upload_csv(request):
     """
     Upload a CSV file and analyze it
@@ -50,30 +56,17 @@ def upload_csv(request):
     if not file:
         return Response({"error": "CSV file required"}, status=400)
 
-    # Store the original filename provided by the client
-    original_filename = file.name
-    
-    # Django will automatically handle duplicate filenames for the 'file' field
-    dataset = UploadedDataset.objects.create(
-        file=file, 
-        original_filename=original_filename, 
-        summary={}
-    )
-
     try:
-        summary = analyze_csv(dataset.file.path)
-    except Exception as e:
-        dataset.delete()
+        validate_csv_file(file)
+    except ValidationError as e:
         return Response({"error": str(e)}, status=400)
 
-    dataset.summary = summary
-    dataset.save()
+    user = request.user if request.user.is_authenticated else None
 
-    # Keep only last 5 datasets
-    qs = UploadedDataset.objects.order_by("-uploaded_at")
-    if qs.count() > 5:
-        for old in qs[5:]:
-            old.delete()
+    try:
+        dataset = handle_upload(file, user)
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)
 
     return Response({
         "dataset_id": dataset.id,
@@ -85,7 +78,7 @@ from django.http import FileResponse
 from .reports import generate_pdf_report
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def summary(request, dataset_id):
     """
     Get summary for a specific dataset
@@ -99,7 +92,7 @@ def summary(request, dataset_id):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def download_report(request, dataset_id):
     """
     Generate and download PDF report for a dataset
@@ -118,7 +111,7 @@ def download_report(request, dataset_id):
 from .comparison import compare_datasets
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def compare_datasets_view(request):
     """
     Compare two datasets
@@ -142,12 +135,19 @@ def compare_datasets_view(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def history(request):
     """
     Get list of recent uploads (last 5)
     """
-    datasets = UploadedDataset.objects.order_by("-uploaded_at")[:5]
+    if request.user.is_authenticated:
+        # Show own datasets AND anonymous ones (for backward compatibility/legacy data)
+        datasets = UploadedDataset.objects.filter(
+            Q(user=request.user) | Q(user__isnull=True)
+        ).order_by("-uploaded_at")[:5]
+    else:
+        # Anonymous users see only anonymous datasets
+        datasets = UploadedDataset.objects.filter(user__isnull=True).order_by("-uploaded_at")[:5]
     return Response([
         {
             "id": d.id,

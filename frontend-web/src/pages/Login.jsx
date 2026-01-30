@@ -54,7 +54,7 @@ export default function Login() {
                 {/* --- LOGIN CARD/BOX BACKGROUND --- */}
                 {/* Change bg-white/10 to bg-[#Color] if you want a solid box, or keep it for glass effect */}
                 <div className="bg-[#7B4019] backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden">
-                    <div className="p-6 md:p-8">
+                    <div className="p-8">
                         <div className="flex justify-center mb-6">
                             <div className="w-16 h-16 bg-[#4F200D] rounded-2xl flex items-center justify-center shadow-lg transform rotate-3">
                                 <Beaker className="w-8 h-8 text-white" />

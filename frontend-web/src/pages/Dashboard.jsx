@@ -194,18 +194,18 @@ export default function Dashboard() {
             <div className="flex-1 overflow-auto">
                 {/* Header */}
                 <header className="bg-app-surface shadow-md px-8 py-6 z-10">
-                    <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-2xl font-bold text-content-main">
                                 Chemical Equipment Visualizer
                             </h1>
                             <p className="text-content-muted mt-1">CSV Analytics Dashboard</p>
                         </div>
-                        <div className="flex items-center gap-4 flex-wrap">
+                        <div className="flex items-center space-x-4">
                             {loading && (
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary mr-4"></div>
                             )}
-                            <span className="text-sm text-content-muted hidden md:block">
+                            <span className="text-sm text-content-muted mr-4">
                                 {new Date().toLocaleDateString('en-US', {
                                     weekday: 'long',
                                     year: 'numeric',
@@ -214,7 +214,7 @@ export default function Dashboard() {
                                 })}
                             </span>
 
-                            <div className="flex items-center gap-2 bg-white/50 p-1 rounded-lg">
+                            <div className="flex items-center gap-2 mr-4 bg-white/50 p-1 rounded-lg">
                                 <button
                                     onClick={() => setIsCompareMode(false)}
                                     className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${!isCompareMode ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -232,7 +232,7 @@ export default function Dashboard() {
                             {summary && !isCompareMode && (
                                 <button
                                     onClick={handleDownloadReport}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors mr-2"
                                 >
                                     Download Report
                                 </button>

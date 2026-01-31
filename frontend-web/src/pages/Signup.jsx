@@ -1,171 +1,112 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState } from 'react';
 import axios from 'axios';
-import { motion } from 'framer-motion';
-import { ArrowRight, Lock, User, Mail, AlertCircle, Beaker } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { UserPlus, Mail, Lock, User, ArrowRight } from 'lucide-react';
 
-import { API_BASE_URL } from '../config';
-
-const API = API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://fossee-chemicalapp-production.up.railway.app/api";
 
 export default function Signup() {
-    const [formData, setFormData] = useState({
-        username: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
-    });
+    const [formData, setFormData] = useState({ username: '', email: '', password: '' });
     const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-    };
-
-    const handleSignup = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
+        setLoading(true);
         setError('');
-
-        if (formData.password !== formData.confirmPassword) {
-            setError("Passwords do not match");
-            setIsLoading(false);
-            return;
-        }
-
         try {
-            await axios.post(`${API}/register/`, {
-                username: formData.username,
-                email: formData.email,
-                password: formData.password,
-            });
-
-            // Auto login or redirect to login
-            // For simplicity, redirecting to login showing success
+            await axios.post(`${API_BASE_URL}/register/`, formData);
             navigate('/login');
         } catch (err) {
-            setError(err.response?.data?.error || 'Registration failed. Please try again.');
+            setError(err.response?.data?.error || "Registration failed. Username may already exist.");
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FFEEA9] relative overflow-hidden">
+        <div className="min-h-screen bg-app-bg flex items-center justify-center p-6 text-black">
+            <div className="w-full max-w-md">
+                <div className="glass-card rounded-[2.5rem] p-12 overflow-hidden relative">
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-black/5 rounded-full blur-3xl"></div>
 
+                    <div className="mb-10 text-center">
+                        <div className="w-16 h-16 bg-black rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-black/20">
+                            <UserPlus className="text-white" size={32} />
+                        </div>
+                        <h1 className="text-3xl font-black tracking-tight mb-2">Create Account</h1>
+                        <p className="text-sm text-black/40 font-bold uppercase tracking-widest">Join Analysis Suite</p>
+                    </div>
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="w-full max-w-md z-10 p-4"
-            >
-                <div className="bg-[#7B4019] backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden">
-                    <div className="p-8">
-                        <div className="flex justify-center mb-6">
-                            <div className="w-16 h-16 bg-[#4F200D] rounded-2xl flex items-center justify-center shadow-lg transform rotate-3">
-                                <Beaker className="w-8 h-8 text-white" />
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-black/40 uppercase tracking-widest ml-4">Username</label>
+                            <div className="relative group">
+                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-black/30 group-focus-within:text-black transition-colors">
+                                    <User size={18} />
+                                </span>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full bg-black/5 border-none rounded-2xl py-4 pl-14 pr-6 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all placeholder:text-black/20"
+                                    placeholder="your_name"
+                                    onChange={e => setFormData({ ...formData, username: e.target.value })}
+                                />
                             </div>
                         </div>
 
-                        <h2 className="text-3xl font-bold text-center text-white mb-2">Create Account</h2>
-                        <p className="text-center text-white mb-8">Join to visualize your equipment parameters</p>
-
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                className="bg-red-500/10 border border-red-500/20 text-red-200 px-4 py-3 rounded-xl flex items-center gap-3 mb-6 text-sm"
-                            >
-                                <AlertCircle className="w-4 h-4" />
-                                {error}
-                            </motion.div>
-                        )}
-
-                        <form onSubmit={handleSignup} className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-black/40 uppercase tracking-widest ml-4">Email</label>
                             <div className="relative group">
-                                <User className="absolute left-4 top-3.5 w-5 h-5 text-black group-focus-within:text-blue-400 transition-colors" />
-                                <input
-                                    type="text"
-                                    name="username"
-                                    placeholder="Username"
-                                    value={formData.username}
-                                    onChange={handleChange}
-                                    className="w-full bg-gray-900/50 border border-black text-white rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-500"
-                                    required
-                                />
-                            </div>
-
-                            <div className="relative group">
-                                <Mail className="absolute left-4 top-3.5 w-5 h-5 text-black group-focus-within:text-blue-400 transition-colors" />
+                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-black/30 group-focus-within:text-black transition-colors">
+                                    <Mail size={18} />
+                                </span>
                                 <input
                                     type="email"
-                                    name="email"
-                                    placeholder="Email Address"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    className="w-full bg-gray-900/50 border border-black text-white rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-500"
                                     required
+                                    className="w-full bg-black/5 border-none rounded-2xl py-4 pl-14 pr-6 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all placeholder:text-black/20"
+                                    placeholder="email@example.com"
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
                                 />
                             </div>
+                        </div>
 
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-black/40 uppercase tracking-widest ml-4">Password</label>
                             <div className="relative group">
-                                <Lock className="absolute left-4 top-3.5 w-5 h-5 text-black group-focus-within:text-blue-400 transition-colors" />
+                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-black/30 group-focus-within:text-black transition-colors">
+                                    <Lock size={18} />
+                                </span>
                                 <input
                                     type="password"
-                                    name="password"
-                                    placeholder="Password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    className="w-full bg-gray-900/50 border border-black text-white rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-500"
                                     required
+                                    className="w-full bg-black/5 border-none rounded-2xl py-4 pl-14 pr-6 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all placeholder:text-black/20"
+                                    placeholder="••••••••"
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
                                 />
                             </div>
+                        </div>
 
-                            <div className="relative group">
-                                <Lock className="absolute left-4 top-3.5 w-5 h-5 text-black group-focus-within:text-blue-400 transition-colors" />
-                                <input
-                                    type="password"
-                                    name="confirmPassword"
-                                    placeholder="Confirm Password"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    className="w-full bg-gray-900/50 border border-black text-white rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-500"
-                                    required
-                                />
-                            </div>
+                        {error && <p className="text-xs font-bold text-red-500 text-center px-4">{error}</p>}
 
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition-all transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
-                            >
-                                {isLoading ? (
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                    <>
-                                        Create Account
-                                        <ArrowRight className="w-5 h-5" />
-                                    </>
-                                )}
-                            </button>
-                        </form>
-                    </div>
+                        <button
+                            disabled={loading}
+                            className="w-full bg-black text-white rounded-2xl py-5 font-bold text-sm flex items-center justify-center gap-3 shadow-2xl shadow-black/20 hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 mt-4"
+                        >
+                            {loading ? "Creating..." : "Register Account"}
+                            <ArrowRight size={18} />
+                        </button>
+                    </form>
 
-                    <div className="bg-gray-900/50 border-t border-white/5 p-6 text-center">
-                        <p className="text-gray-400 text-sm">
-                            Already have an account?{' '}
-                            <Link to="/login" className="text-blue-400 font-semibold hover:text-blue-300 transition-colors">
-                                Sign In
-                            </Link>
-                        </p>
+                    <div className="mt-10 pt-8 border-t border-black/5 text-center">
+                        <p className="text-xs text-black/40 font-bold mb-4">Already registered?</p>
+                        <Link to="/login" className="text-sm font-black underline decoration-2 underline-offset-4 hover:text-black/60 transition-colors">
+                            Return to Login
+                        </Link>
                     </div>
                 </div>
-            </motion.div>
+            </div>
         </div>
     );
 }

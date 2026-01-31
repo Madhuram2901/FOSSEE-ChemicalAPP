@@ -1,18 +1,12 @@
-/**
- * Chemical Equipment Parameter Visualizer - Web Application
- * Main App Component
- */
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
 
+// A simple wrapper to check auth on every navigation
 const ProtectedRoute = ({ children }) => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-        return <Navigate to="/login" replace />;
-    }
-    return children;
+    const isAuthenticated = !!localStorage.getItem('auth_token');
+    return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
 function App() {
@@ -22,13 +16,14 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route
-                    path="/"
+                    path="/dashboard"
                     element={
                         <ProtectedRoute>
                             <Dashboard />
                         </ProtectedRoute>
                     }
                 />
+                <Route path="/" element={<Navigate to="/dashboard" />} />
             </Routes>
         </Router>
     );

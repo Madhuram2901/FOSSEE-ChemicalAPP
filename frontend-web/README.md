@@ -1,41 +1,27 @@
-# Chemical Equipment Parameter Visualizer - Web Frontend
+# Chemical Equipment Visualizer V2
 
-A React-based web application for visualizing chemical equipment parameters.
+This is a premium, refactored version of the Chemical Equipment Visualizer web frontend. It is designed for stability and high-aesthetic impact.
 
-## Requirements
+## ✨ Key Enhancements
+- **Stability**: Uses Tailwind V3.4 (Standard) to ensure compatibility with all deployment environments (Render, Vercel, Netlify).
+- **Design**: Premium glassmorphism UI with a custom black/gold/bone-white theme.
+- **Responsiveness**: Fully fluid layout using standard Tailwind primitives.
+- **Performance**: Optimized build pipeline via Vite 5.
 
-- Node.js 18+
-- npm or yarn
+## 🚀 Deployment Instructions (Render)
+1. **New Web Service**: Connect your GitHub repository.
+2. **Root Directory**: `frontend-web-2`
+3. **Environment**: `Static Site`
+4. **Build Command**: `npm install && npm run build`
+5. **Publish Directory**: `dist`
+6. **Environment Variables**:
+   - `VITE_API_URL`: `https://fossee-chemicalapp-production.up.railway.app/api`
 
-## Setup
-
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-3. Open your browser and navigate to `http://localhost:5173`
-
-## Build for Production
-
+## 🛠 Local Development
 ```bash
-npm run build
+cd frontend-web-2
+npm install
+npm run dev
 ```
 
-The production build will be available in the `dist/` directory.
-
-## Features (Planned)
-
-- Equipment parameter visualization
-- Interactive charts and graphs
-- Backend API integration
-- Data filtering and search
-
-## Development Status
-
-This is the initial scaffold. Core features will be implemented in future PRs.
+The app will be available at `http://localhost:5174`.

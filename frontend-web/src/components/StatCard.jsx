@@ -1,19 +1,20 @@
-export default function StatCard({ title, value, subtitle, icon }) {
+import React from 'react';
+
+export default function StatCard({ title, value, unit, color = 'text-black' }) {
     return (
-        <div className="bg-app-surface p-6 rounded-2xl shadow-xl">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-content-muted text-sm font-medium">{title}</p>
-                    <p className="text-3xl font-bold text-content-main mt-2">{value}</p>
-                    {subtitle && (
-                        <p className="text-flowrate text-sm mt-1 font-medium">{subtitle}</p>
-                    )}
-                </div>
-                {icon && (
-                    <div className="w-14 h-14 bg-primary-light rounded-2xl flex items-center justify-center">
-                        <span className="text-2xl">{icon}</span>
-                    </div>
-                )}
+        <div className="glass-card p-8 rounded-3xl transition-all duration-300 hover:scale-[1.02] hover:rotate-1">
+            <p className="text-[10px] font-bold text-black/40 uppercase tracking-widest mb-1">{title}</p>
+            <div className="flex items-baseline gap-1">
+                <span className={`text-4xl font-extrabold tracking-tight ${color}`}>
+                    {value}
+                </span>
+                <span className="text-xs font-bold text-black/40">{unit}</span>
+            </div>
+            <div className="mt-4 h-1.5 w-full bg-black/5 rounded-full overflow-hidden">
+                <div
+                    className={`h-full bg-current ${color} opacity-20`}
+                    style={{ width: value !== "—" ? '60%' : '0%' }}
+                />
             </div>
         </div>
     );

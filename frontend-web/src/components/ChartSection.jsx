@@ -1,81 +1,69 @@
-import { useState } from "react";
-import { Bar, Pie, Line } from "react-chartjs-2";
 import {
     Chart as ChartJS,
     CategoryScale,
     LinearScale,
     BarElement,
-    PointElement,
-    LineElement,
-    ArcElement,
     Tooltip,
     Legend,
-} from "chart.js";
+    ArcElement,
+} from 'chart.js';
+import { Bar, Pie } from 'react-chartjs-2';
 
 ChartJS.register(
     CategoryScale,
     LinearScale,
     BarElement,
-    PointElement,
-    LineElement,
-    ArcElement,
     Tooltip,
-    Legend
+    Legend,
+    ArcElement
 );
 
-const barColors = ["#10b981", "#f59e0b", "#ef4444"];
-const pieColors = [
-    "#2563eb",
-    "#10b981",
-    "#f59e0b",
-    "#ef4444",
-    "#8b5cf6",
-    "#ec4899",
-    "#06b6d4",
-    "#84cc16",
-];
-
 export default function ChartSection({ data }) {
-    const [chartType, setChartType] = useState("bar"); // 'bar' or 'line'
-
     if (!data) return null;
 
-    const avgData = {
-        labels: ["Flowrate (m³/h)", "Pressure (bar)", "Temperature (°C)"],
-        datasets: [
-            {
-                label: "Average Values",
-                data: [data.averages.flowrate, data.averages.pressure, data.averages.temperature],
-                backgroundColor: chartType === "bar" ? barColors : "rgba(37, 99, 235, 0.1)",
-                borderColor: chartType === "line" ? "#2563eb" : "transparent",
-                borderWidth: 2,
-                borderRadius: 8,
-                barThickness: 40,
-                tension: 0.4,
-                fill: true,
-            },
-        ],
-    };
-
-    const avgOptions = {
+    const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             legend: {
                 display: false,
             },
+            tooltip: {
+                backgroundColor: '#000',
+                titleFont: { family: 'Outfit', size: 12, weight: 'bold' },
+                bodyFont: { family: 'Outfit', size: 12 },
+                padding: 12,
+                cornerRadius: 12,
+                displayColors: false,
+            }
         },
         scales: {
             y: {
                 beginAtZero: true,
-                grid: { color: "#f1f5f9" },
-                ticks: { color: "#64748b" },
+                grid: { color: 'rgba(0,0,0,0.03)', drawBorder: false },
+                ticks: { font: { family: 'Outfit', size: 10, weight: 'bold' }, color: 'rgba(0,0,0,0.3)' }
             },
             x: {
                 grid: { display: false },
-                ticks: { color: "#64748b" },
+                ticks: { font: { family: 'Outfit', size: 10, weight: 'bold' }, color: 'rgba(0,0,0,0.3)' }
+            }
+        }
+    };
+
+    const performanceData = {
+        labels: ['Flowrate', 'Pressure', 'Temperature'],
+        datasets: [
+            {
+                data: [data.averages.flowrate, data.averages.pressure, data.averages.temperature],
+                backgroundColor: [
+                    '#10b981', // flowrate
+                    '#f59e0b', // pressure
+                    '#ef4444'  // temperature
+                ],
+                borderRadius: 12,
+                barThickness: 40,
             },
-        },
+        ],
     };
 
     const pieData = {
@@ -83,8 +71,22 @@ export default function ChartSection({ data }) {
         datasets: [
             {
                 data: Object.values(data.type_distribution),
-                backgroundColor: pieColors.slice(0, Object.keys(data.type_distribution).length),
-                borderWidth: 0,
+                backgroundColor: [
+                    '#10b981', // Emerald
+                    '#f59e0b', // Amber
+                    '#ef4444', // Red
+                    '#3b82f6', // Blue
+                    '#8b5cf6', // Violet
+                    '#ec4899', // Pink
+                    '#06b6d4', // Cyan
+                    '#f97316', // Orange
+                    '#14b8a6', // Teal
+                    '#a855f7', // Purple
+                    '#eab308', // Yellow
+                    '#6366f1', // Indigo
+                ],
+                borderWidth: 2,
+                borderColor: '#EFE1B5',
             },
         ],
     };
@@ -94,59 +96,44 @@ export default function ChartSection({ data }) {
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                position: "right",
+                position: 'bottom',
                 labels: {
-                    color: "#0f172a",
-                    padding: 16,
+                    font: { family: 'Outfit', size: 10, weight: 'bold' },
+                    padding: 20,
                     usePointStyle: true,
-                    font: { size: 12 },
-                },
+                }
             },
-        },
+            tooltip: {
+                backgroundColor: '#000',
+                titleFont: { family: 'Outfit', size: 12, weight: 'bold' },
+                bodyFont: { family: 'Outfit', size: 12 },
+                padding: 12,
+                cornerRadius: 12,
+            }
+        }
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Average Parameters Chart */}
-            <div className="bg-app-surface p-6 rounded-2xl shadow-md">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-content-main">Average Parameters</h3>
-                    <div className="flex bg-app-bg p-1 rounded-lg">
-                        <button
-                            onClick={() => setChartType("bar")}
-                            className={`px-3 py-1 text-xs rounded-md transition-all ${chartType === "bar" ? "bg-primary text-white shadow-sm" : "text-content-muted"
-                                }`}
-                        >
-                            Bar
-                        </button>
-                        <button
-                            onClick={() => setChartType("line")}
-                            className={`px-3 py-1 text-xs rounded-md transition-all ${chartType === "line" ? "bg-primary text-white shadow-sm" : "text-content-muted"
-                                }`}
-                        >
-                            Line
-                        </button>
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div className="glass-card rounded-[2rem] p-8 h-[450px] flex flex-col">
+                <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-lg font-bold">Average Metrics</h3>
+                    <span className="text-[10px] font-black text-black/30 uppercase tracking-widest">Global Averages</span>
                 </div>
-                <div className="h-64">
-                    {chartType === "bar" ? (
-                        <Bar data={avgData} options={avgOptions} />
-                    ) : (
-                        <Line data={avgData} options={avgOptions} />
-                    )}
+                <div className="flex-1">
+                    <Bar options={chartOptions} data={performanceData} />
                 </div>
             </div>
 
-            {/* Pie Chart */}
-            <div className="bg-app-surface p-6 rounded-2xl shadow-md">
-                <h3 className="text-lg font-semibold text-content-main mb-4">
-                    Equipment Type Distribution
-                </h3>
-                <div className="h-64">
-                    <Pie data={pieData} options={pieOptions} />
+            <div className="glass-card rounded-[2rem] p-8 h-[450px] flex flex-col">
+                <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-lg font-bold">Distribution</h3>
+                    <span className="text-[10px] font-black text-black/30 uppercase tracking-widest">Equipment Types</span>
+                </div>
+                <div className="flex-1">
+                    <Pie options={pieOptions} data={pieData} />
                 </div>
             </div>
         </div>
     );
 }
-

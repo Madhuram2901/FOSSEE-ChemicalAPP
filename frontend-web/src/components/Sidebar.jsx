@@ -1,49 +1,39 @@
-export default function Sidebar() {
+import { LayoutDashboard, History, Info, Settings, HelpCircle, AlertTriangle, TrendingUp } from 'lucide-react';
+
+export default function Sidebar({ activeView, setActiveView }) {
+    const navItems = [
+        { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { id: 'risk', icon: AlertTriangle, label: 'Risk Analysis' },
+        { id: 'trends', icon: TrendingUp, label: 'Trends' },
+        { id: 'history', icon: History, label: 'History' },
+        { id: 'analytics', icon: Info, label: 'Analytics' },
+        { id: 'settings', icon: Settings, label: 'Settings' },
+    ];
+
     return (
-        <div className="w-20 bg-app-surface shadow-2xl flex flex-col items-center py-6 space-y-8">
-            {/* Logo */}
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-                <span className="text-white text-xl font-bold">CE</span>
+        <aside className="w-24 bg-app-surface border-r border-black/5 flex flex-col items-center py-10 shrink-0">
+            <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center mb-16 shadow-xl shadow-black/20 cursor-pointer" onClick={() => setActiveView('dashboard')}>
+                <span className="text-white font-black text-xl">C</span>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex flex-col items-center space-y-6 flex-1">
-                <button
-                    className="w-12 h-12 rounded-xl bg-primary-light text-primary flex items-center justify-center hover:opacity-80 transition-opacity"
-                    title="Dashboard"
-                >
-                    <span className="text-xl">📊</span>
-                </button>
-
-                <button
-                    className="w-12 h-12 rounded-xl text-content-muted flex items-center justify-center hover:bg-app-bg transition-colors"
-                    title="Upload"
-                >
-                    <span className="text-xl">📁</span>
-                </button>
-
-                <button
-                    className="w-12 h-12 rounded-xl text-content-muted flex items-center justify-center hover:bg-app-bg transition-colors"
-                    title="History"
-                >
-                    <span className="text-xl">📜</span>
-                </button>
-
-                <button
-                    className="w-12 h-12 rounded-xl text-content-muted flex items-center justify-center hover:bg-app-bg transition-colors"
-                    title="About"
-                >
-                    <span className="text-xl">ℹ️</span>
-                </button>
+            <nav className="flex-1 flex flex-col gap-8">
+                {navItems.map((item) => (
+                    <button
+                        key={item.id}
+                        onClick={() => setActiveView(item.id)}
+                        className={`group relative p-3 rounded-2xl transition-all duration-300 ${activeView === item.id ? 'bg-black text-white shadow-lg scale-110' : 'text-black/30 hover:bg-black/5 hover:text-black'}`}
+                    >
+                        <item.icon size={24} strokeWidth={2.5} />
+                        <span className="absolute left-full ml-4 px-2 py-1 bg-black text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                            {item.label}
+                        </span>
+                    </button>
+                ))}
             </nav>
 
-            {/* Settings */}
-            <button
-                className="w-12 h-12 rounded-xl text-content-muted flex items-center justify-center hover:bg-app-bg transition-colors"
-                title="Settings"
-            >
-                <span className="text-xl">⚙️</span>
+            <button className="text-black/20 hover:text-black transition-colors duration-300">
+                <HelpCircle size={24} strokeWidth={2.5} />
             </button>
-        </div>
+        </aside>
     );
 }

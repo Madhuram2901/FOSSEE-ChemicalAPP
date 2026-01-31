@@ -1,59 +1,44 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-  /* Main Colors */
-  --color-primary: #000000;
-  --color-primary-light: #FAF9F6;
-
-  /* App/Background Colors */
-  --color-app-bg: #CDB885;
-  --color-app-surface: #EFE1B5;
-  --color-app-border: transparent;
-  /* Removed black borders */
-
-  /* Metric Specific Colors */
-  --color-flowrate: #10b981;
-  --color-pressure: #f59e0b;
-  --color-temperature: #ef4444;
-
-  /* Text Colors */
-  --color-content-main: #000000;
-  --color-content-muted: #000000;
+:root {
+    --color-app-bg: #CDB885;
+    --color-app-surface: #EFE1B5;
+    --color-primary: #000000;
 }
 
-* {
-  margin: 5;
-  padding: 5;
-  box-sizing: border-box;
+@layer base {
+    body {
+        @apply bg-app-bg text-content-main min-h-screen;
+        margin: 0;
+        padding: 0;
+    }
 }
 
-body {
-  font-family: 'Outfit', sans-serif;
-  letter-spacing: -0.01em;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  @apply bg-app-bg text-content-main;
+@layer components {
+    .glass-card {
+        @apply bg-app-surface/90 backdrop-blur-sm shadow-premium border border-white/10;
+    }
+
+    .btn-primary {
+        @apply px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-all font-medium;
+    }
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  letter-spacing: -0.02em;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
 }
 
-@keyframes progress-fast {
-  0% {
-    width: 0%;
-  }
-
-  100% {
-    width: 100%;
-  }
+::-webkit-scrollbar-track {
+    @apply bg-app-bg;
 }
 
-.animate-progress-fast {
-  animation: progress-fast 2s linear infinite;
+::-webkit-scrollbar-thumb {
+    @apply bg-black/10 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-black/20;
 }

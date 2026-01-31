@@ -1,45 +1,27 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { LogOut, History, RotateCcw, Download, Info, Settings, FileText, AlertTriangle } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import StatCard from "../components/StatCard";
 import ChartSection from "../components/ChartSection";
 import UploadForm from "../components/UploadForm";
 import DataTable from "../components/DataTable";
-import TypeDistribution from "../components/TypeDistribution";
-import HistoryList from "../components/HistoryList";
-import flowrateIcon from "../assets/flowrate.png";
-import chemistryIcon from "../assets/chemistry.png";
-import pressureIcon from "../assets/pressure.png";
-import temperatureIcon from "../assets/temperature.png";
+import RiskAnalysis from "../components/RiskAnalysis";
+import AnalyticsView from "../components/AnalyticsView";
+import TrendsView from "../components/TrendsView";
+import { Sparkles, BarChart3, TrendingUp as TrendIcon, Zap } from "lucide-react";
 
-// Icon Attributions:
-// Flow rate: https://www.flaticon.com/free-icons/flow-rate
-// Chemistry: https://www.flaticon.com/free-icons/chemistry
-// Pressure: https://www.flaticon.com/free-icons/pressure
-// Temperature: Provided by user (via Flaticon)
-
-import { API_BASE_URL } from "../config";
-
-const API = API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://fossee-chemicalapp-production.up.railway.app/api";
 
 export default function Dashboard() {
     const [summary, setSummary] = useState(null);
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [fetchingHistory, setFetchingHistory] = useState(false);
     const [selectedDatasetId, setSelectedDatasetId] = useState(null);
-    const [showAveragesChart, setShowAveragesChart] = useState(true);
-    const [showTypeDistributionChart, setShowTypeDistributionChart] = useState(true);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
-
-    // Comparison Mode State
-    const [isCompareMode, setIsCompareMode] = useState(false);
-    const [compareIdA, setCompareIdA] = useState('');
-    const [compareIdB, setCompareIdB] = useState('');
-    const [compareData, setCompareData] = useState(null);
+    const [activeView, setActiveView] = useState('dashboard');
 
     // Auth
     const token = localStorage.getItem('auth_token');
@@ -51,61 +33,41 @@ export default function Dashboard() {
             return;
         }
         fetchHistory();
-    }, [token, navigate]);
+    }, [token]);
 
     const handleLogout = () => {
         localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
         navigate('/login');
     };
 
-    const getAuthHeaders = () => {
-        return {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        };
-    };
-
     const fetchHistory = async () => {
-        if (!token) return;
-        setFetchingHistory(true);
         try {
-            const res = await axios.get(`${API}/history/`, getAuthHeaders());
+            const res = await axios.get(`${API_BASE_URL}/history/`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setHistory(res.data);
-            // If we have history and no current summary, load the latest one
-            if (res.data.length > 0 && !summary) {
-                const latestId = res.data[0].id;
-                setSelectedDatasetId(latestId);
-                handleSelectDataset(latestId);
+            if (res.data.length > 0 && !selectedDatasetId) {
+                handleSelectDataset(res.data[0].id);
             }
         } catch (err) {
-            console.error("Failed to fetch history");
-            if (err.response && err.response.status === 401) {
-                handleLogout(); // Auto logout on 401
-            } else {
-                setError("Failed to fetch dataset history. Please try again.");
-            }
+            if (err.response?.status === 401) handleLogout();
+            else setError("Failed to fetch history");
         } finally {
-            setFetchingHistory(false);
+            // Loading handle
         }
     };
 
     const handleSelectDataset = async (id) => {
-        if (!id || !token) return;
-        setSelectedDatasetId(id);
         setLoading(true);
         setError(null);
-        setSuccessMessage(null);
+        setSelectedDatasetId(id);
         try {
-            const res = await axios.get(`${API}/summary/${id}/`, getAuthHeaders());
+            const res = await axios.get(`${API_BASE_URL}/summary/${id}/`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setSummary(res.data);
         } catch (err) {
-            if (err.response && err.response.status === 401) {
-                handleLogout();
-            } else {
-                setError("Failed to load dataset details");
-            }
+            setError("Failed to load dataset details");
         } finally {
             setLoading(false);
         }
@@ -113,8 +75,6 @@ export default function Dashboard() {
 
     const handleUpload = async (file) => {
         if (!file) return;
-        if (!token) return;
-
         setLoading(true);
         setError(null);
         setSuccessMessage(null);
@@ -123,17 +83,17 @@ export default function Dashboard() {
         formData.append("file", file);
 
         try {
-            const config = getAuthHeaders();
-            const res = await axios.post(`${API}/upload/`, formData, config);
-            setSuccessMessage("File uploaded and processed successfully!");
-            await fetchHistory(); // Refresh history
-            await handleSelectDataset(res.data.dataset_id); // Load the new dataset
+            const res = await axios.post(`${API_BASE_URL}/upload/`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            setSuccessMessage("Dataset processed successfully!");
+            await fetchHistory();
+            await handleSelectDataset(res.data.dataset_id);
         } catch (err) {
-            if (err.response && err.response.status === 401) {
-                handleLogout();
-            } else {
-                setError(err.response?.data?.error || "Failed to upload file");
-            }
+            setError(err.response?.data?.error || "Upload failed");
         } finally {
             setLoading(false);
         }
@@ -141,9 +101,9 @@ export default function Dashboard() {
 
     const handleDownloadReport = async () => {
         if (!selectedDatasetId || !token) return;
-
+        setLoading(true);
         try {
-            const response = await axios.get(`${API}/report/${selectedDatasetId}/`, {
+            const response = await axios.get(`${API_BASE_URL}/report/${selectedDatasetId}/`, {
                 headers: { Authorization: `Bearer ${token}` },
                 responseType: 'blob',
             });
@@ -155,369 +115,240 @@ export default function Dashboard() {
             document.body.appendChild(link);
             link.click();
             link.remove();
+            setSuccessMessage("Report downloaded successfully!");
         } catch (err) {
-            if (err.response && err.response.status === 401) {
-                handleLogout();
-            } else {
-                setError("Failed to download report");
-            }
-        }
-    };
-
-    const fetchComparison = async () => {
-        if (!compareIdA || !compareIdB || !token) return;
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await axios.get(`${API}/compare/?dataset_a=${compareIdA}&dataset_b=${compareIdB}`, getAuthHeaders());
-            setCompareData(res.data);
-        } catch (err) {
-            setError("Failed to fetch comparison data.");
+            setError("Failed to download report. Please try again.");
         } finally {
             setLoading(false);
         }
     };
 
-    // Effect to auto-fetch comparison when both IDs selected
-    useEffect(() => {
-        if (isCompareMode && compareIdA && compareIdB) {
-            fetchComparison();
-        }
-    }, [isCompareMode, compareIdA, compareIdB]);
-
     return (
-        <div className="flex min-h-screen bg-app-bg">
-            {/* Sidebar */}
-            <Sidebar />
+        <div className="flex h-screen overflow-hidden bg-app-bg">
+            <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
-            {/* Main Content */}
-            <div className="flex-1 overflow-auto">
-                {/* Header */}
-                <header className="bg-app-surface shadow-md px-8 py-6 z-10">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-content-main">
-                                Chemical Equipment Visualizer
-                            </h1>
-                            <p className="text-content-muted mt-1">CSV Analytics Dashboard</p>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            {loading && (
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary mr-4"></div>
-                            )}
-                            <span className="text-sm text-content-muted mr-4">
-                                {new Date().toLocaleDateString('en-US', {
-                                    weekday: 'long',
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                })}
-                            </span>
+            <main className="flex-1 flex flex-col overflow-hidden">
+                <header className="h-20 bg-app-surface/50 backdrop-blur-md border-b border-black/5 flex items-center justify-between px-10 shrink-0">
+                    <div>
+                        <h1 className="text-xl font-bold text-black uppercase tracking-tighter capitalize">{activeView}</h1>
+                        <p className="text-xs text-black/60 font-medium tracking-wide">Chemical Equipment Suite</p>
+                    </div>
 
-                            <div className="flex items-center gap-2 mr-4 bg-white/50 p-1 rounded-lg">
-                                <button
-                                    onClick={() => setIsCompareMode(false)}
-                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${!isCompareMode ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                >
-                                    Single
-                                </button>
-                                <button
-                                    onClick={() => setIsCompareMode(true)}
-                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${isCompareMode ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                >
-                                    Compare
-                                </button>
-                            </div>
-
-                            {summary && !isCompareMode && (
-                                <button
-                                    onClick={handleDownloadReport}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors mr-2"
-                                >
-                                    Download Report
-                                </button>
-                            )}
-
+                    <div className="flex items-center gap-6">
+                        {summary && activeView === 'dashboard' && (
                             <button
-                                onClick={handleLogout}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                onClick={handleDownloadReport}
+                                disabled={loading}
+                                className="flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-widest bg-black text-white rounded-xl hover:opacity-80 transition-all active:scale-95 disabled:opacity-50"
                             >
-                                <LogOut className="w-4 h-4" />
-                                Sign Out
+                                <Download size={14} />
+                                Export PDF
                             </button>
+                        )}
+                        <div className="text-right">
+                            <p className="text-sm font-semibold">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                            <p className="text-[10px] text-black/40 font-bold uppercase tracking-wider">System Status: Active</p>
                         </div>
+                        <button
+                            onClick={handleLogout}
+                            className="p-2.5 rounded-xl bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white transition-all duration-300"
+                        >
+                            <LogOut size={20} />
+                        </button>
                     </div>
                 </header>
 
-                {/* Content Area */}
-                <div className="p-8">
-                    {error && (
-                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 shadow-md flex items-center justify-between gap-4">
-                            <div>
-                                <span className="font-medium">Error:</span> {error}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        // Retry history if we have no datasets yet, otherwise retry the last selected dataset
-                                        if (!selectedDatasetId) {
-                                            fetchHistory();
-                                        } else {
-                                            handleSelectDataset(selectedDatasetId);
-                                        }
-                                    }}
-                                    className="px-3 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                                >
-                                    Retry
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                    {successMessage && (
-                        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 shadow-md">
-                            <span className="font-medium">Success:</span> {successMessage}
-                        </div>
-                    )}
-
-                    {isCompareMode ? (
-                        /* --- COMPARISON MODE --- */
-                        <div className="space-y-6">
-                            {/* Comparison Selectors */}
-                            <div className="grid grid-cols-2 gap-8">
-                                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Dataset A (Baseline)</label>
-                                    <select
-                                        value={compareIdA}
-                                        onChange={(e) => setCompareIdA(e.target.value)}
-                                        className="w-full p-2 border rounded-lg"
-                                    >
-                                        <option value="">Select Dataset A...</option>
-                                        {history.map(d => (
-                                            <option key={d.id} value={d.id} disabled={d.id == compareIdB}>
-                                                {d.original_filename} (ID: {d.id})
-                                            </option>
-                                        ))}
-                                    </select>
+                <div className="flex-1 overflow-y-auto p-10">
+                    {activeView === 'dashboard' && (
+                        <>
+                            {/* Error/Success Feed */}
+                            {error && (
+                                <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-600 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+                                    <span className="text-sm font-medium">{error}</span>
+                                    <button onClick={() => setError(null)} className="text-xs font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Dismiss</button>
                                 </div>
-                                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Dataset B (Comparison)</label>
-                                    <select
-                                        value={compareIdB}
-                                        onChange={(e) => setCompareIdB(e.target.value)}
-                                        className="w-full p-2 border rounded-lg"
-                                    >
-                                        <option value="">Select Dataset B...</option>
-                                        {history.map(d => (
-                                            <option key={d.id} value={d.id} disabled={d.id == compareIdA}>
-                                                {d.original_filename} (ID: {d.id})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Comparison View */}
-                            {compareData && (
-                                <>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {/* A Stats */}
-                                        <div className="bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
-                                            <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">Dataset A: {compareData.dataset_a.filename}</h3>
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-gray-500">Equipment</span>
-                                                    <span className="font-bold text-xl">{compareData.dataset_a.summary.total_equipment}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-gray-500">Flowrate</span>
-                                                    <span className="font-bold text-lg">{compareData.dataset_a.summary.averages.flowrate}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-gray-500">Pressure</span>
-                                                    <span className="font-bold text-lg">{compareData.dataset_a.summary.averages.pressure}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-gray-500">Temp</span>
-                                                    <span className="font-bold text-lg">{compareData.dataset_a.summary.averages.temperature}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Delta Stats / Analysis */}
-                                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 shadow-inner flex flex-col justify-center">
-                                            <h3 className="font-bold text-lg text-center text-gray-800 mb-6">Advanced Analysis (B vs A)</h3>
-
-                                            {/* Flowrate Analysis */}
-                                            <div className="mb-4">
-                                                <div className="flex justify-between items-center px-4 mb-1">
-                                                    <span className="font-semibold text-gray-700">Flowrate</span>
-                                                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase ${compareData.comparison_stats.flowrate.risk_level === 'critical' ? 'bg-red-100 text-red-700' :
-                                                        compareData.comparison_stats.flowrate.risk_level === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
-                                                        {compareData.comparison_stats.flowrate.risk_level}
-                                                    </span>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 px-4">
-                                                    <div>Change: <span className="font-mono text-gray-800">{compareData.comparison_stats.flowrate.percent_change}%</span></div>
-                                                    <div>Effect: <span className="font-mono text-gray-800">{compareData.comparison_stats.flowrate.effect_size}</span></div>
-                                                    <div>Stability: <span className={`font-mono ${compareData.comparison_stats.flowrate.stability === 'unstable' ? 'text-orange-600' : 'text-green-600'}`}>{compareData.comparison_stats.flowrate.stability}</span></div>
-                                                </div>
-                                            </div>
-
-                                            {/* Pressure Analysis */}
-                                            <div className="mb-4 border-t pt-3">
-                                                <div className="flex justify-between items-center px-4 mb-1">
-                                                    <span className="font-semibold text-gray-700">Pressure</span>
-                                                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase ${compareData.comparison_stats.pressure.risk_level === 'critical' ? 'bg-red-100 text-red-700' :
-                                                        compareData.comparison_stats.pressure.risk_level === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
-                                                        {compareData.comparison_stats.pressure.risk_level}
-                                                    </span>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 px-4">
-                                                    <div>Change: <span className="font-mono text-gray-800">{compareData.comparison_stats.pressure.percent_change}%</span></div>
-                                                    <div>Effect: <span className="font-mono text-gray-800">{compareData.comparison_stats.pressure.effect_size}</span></div>
-                                                    <div>Stability: <span className={`font-mono ${compareData.comparison_stats.pressure.stability === 'unstable' ? 'text-orange-600' : 'text-green-600'}`}>{compareData.comparison_stats.pressure.stability}</span></div>
-                                                </div>
-                                            </div>
-
-                                            {/* Temperature Analysis */}
-                                            <div className="border-t pt-3">
-                                                <div className="flex justify-between items-center px-4 mb-1">
-                                                    <span className="font-semibold text-gray-700">Temperature</span>
-                                                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase ${compareData.comparison_stats.temperature.risk_level === 'critical' ? 'bg-red-100 text-red-700' :
-                                                        compareData.comparison_stats.temperature.risk_level === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
-                                                        {compareData.comparison_stats.temperature.risk_level}
-                                                    </span>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 px-4">
-                                                    <div>Change: <span className="font-mono text-gray-800">{compareData.comparison_stats.temperature.percent_change}%</span></div>
-                                                    <div>Effect: <span className="font-mono text-gray-800">{compareData.comparison_stats.temperature.effect_size}</span></div>
-                                                    <div>Stability: <span className={`font-mono ${compareData.comparison_stats.temperature.stability === 'unstable' ? 'text-orange-600' : 'text-green-600'}`}>{compareData.comparison_stats.temperature.stability}</span></div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* B Stats */}
-                                        <div className="bg-white p-6 rounded-xl border border-green-100 shadow-sm">
-                                            <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">Dataset B: {compareData.dataset_b.filename}</h3>
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-gray-500">Equipment</span>
-                                                    <span className="font-bold text-xl">{compareData.dataset_b.summary.total_equipment}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-gray-500">Flowrate</span>
-                                                    <span className="font-bold text-lg">{compareData.dataset_b.summary.averages.flowrate}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-gray-500">Pressure</span>
-                                                    <span className="font-bold text-lg">{compareData.dataset_b.summary.averages.pressure}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-gray-500">Temp</span>
-                                                    <span className="font-bold text-lg">{compareData.dataset_b.summary.averages.temperature}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </>
                             )}
-                        </div>
-                    ) : (
-                        /* --- NORMAL MODE (Existing Layout) --- */
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Left & Center Content */}
-                            <div className="lg:col-span-2 space-y-6">
-                                {/* Stats Row */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                                    <StatCard
-                                        title="Total Equipment"
-                                        value={summary ? `${summary.total_equipment} units` : "—"}
-                                        icon={<img src={chemistryIcon} alt="Chemistry" className="w-12 h-12 object-contain" />}
-                                    />
-                                    <StatCard
-                                        title="Avg Flowrate"
-                                        value={summary ? `${summary.averages.flowrate} m³/h` : "—"}
-                                        icon={<img src={flowrateIcon} alt="Flowrate" className="w-9 h-9 object-contain" />}
-                                    />
-                                    <StatCard
-                                        title="Avg Pressure"
-                                        value={summary ? `${summary.averages.pressure} bar` : "—"}
-                                        icon={<img src={pressureIcon} alt="Pressure" className="w-12 h-12 object-contain" />}
-                                    />
-                                    <StatCard
-                                        title="Avg Temperature"
-                                        value={summary ? `${summary.averages.temperature} °C` : "—"}
-                                        icon={<img src={temperatureIcon} alt="Temperature" className="w-9 h-9 object-contain" />}
-                                    />
+
+                            {successMessage && (
+                                <div className="mb-8 p-4 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-600 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+                                    <span className="text-sm font-medium">{successMessage}</span>
+                                    <button onClick={() => setSuccessMessage(null)} className="text-xs font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Dismiss</button>
                                 </div>
+                            )}
 
-                                {/* Chart visibility controls */}
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <div className="text-sm text-content-muted">
-                                        Toggle analytics views to focus on what matters for this dataset.
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowAveragesChart((prev) => !prev)}
-                                            className={`px-3 py-1 text-xs rounded-lg border text-content-main transition-colors ${showAveragesChart ? "bg-app-bg border-primary" : "bg-app-bg border-gray-300"
-                                                }`}
-                                        >
-                                            {showAveragesChart ? "Hide" : "Show"} Averages Chart
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowTypeDistributionChart((prev) => !prev)}
-                                            className={`px-3 py-1 text-xs rounded-lg border text-content-main transition-colors ${showTypeDistributionChart ? "bg-app-bg border-primary" : "bg-app-bg border-gray-300"
-                                                }`}
-                                        >
-                                            {showTypeDistributionChart ? "Hide" : "Show"} Type Distribution
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Charts */}
-                                {summary && showAveragesChart && <ChartSection data={summary} />}
-
-                                {/* Type Distribution */}
-                                {summary && showTypeDistributionChart && (
-                                    <TypeDistribution distribution={summary.type_distribution} />
-                                )}
-
-                                {/* Data Table */}
-                                {summary && <DataTable rows={summary.table} />}
-
-                                {/* Empty State */}
-                                {!summary && !loading && (
-                                    <div className="bg-app-surface rounded-2xl shadow-xl p-12 text-center">
-                                        <div className="text-6xl mb-4">📈</div>
-                                        <h3 className="text-xl font-semibold text-content-main mb-2">
-                                            No Data Yet
-                                        </h3>
-                                        <p className="text-content-muted max-w-md mx-auto">
-                                            Upload a CSV file containing equipment data to see analytics,
-                                            charts, and detailed breakdowns.
-                                        </p>
-                                    </div>
-                                )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 shrink-0">
+                                <StatCard title="Total Equipment" value={summary?.total_equipment || "—"} unit="Units" />
+                                <StatCard title="Avg Flowrate" value={summary?.averages?.flowrate || "—"} unit="m³/h" color="text-flowrate" />
+                                <StatCard title="Avg Pressure" value={summary?.averages?.pressure || "—"} unit="bar" color="text-pressure" />
+                                <StatCard title="Avg Temperature" value={summary?.averages?.temperature || "—"} unit="°C" color="text-temperature" />
                             </div>
 
-                            {/* Right Sidebar - Upload Form & History */}
-                            <div className="lg:col-span-1">
-                                <UploadForm onUpload={handleUpload} loading={loading} />
-                                <HistoryList
-                                    history={history}
-                                    onSelect={handleSelectDataset}
-                                    currentId={summary?.id}
-                                    loading={loading}
-                                    fetching={fetchingHistory}
-                                />
+                            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                                <div className="xl:col-span-2 space-y-10">
+                                    {summary && (
+                                        <div className="space-y-10">
+                                            <ChartSection data={summary} />
+
+                                        </div>
+                                    )}
+                                    {!summary && !loading && (
+                                        <div className="h-64 glass-card rounded-[2.5rem] flex flex-col items-center justify-center p-10 border-2 border-dashed border-black/5">
+                                            <div className="w-16 h-16 bg-black/5 rounded-full flex items-center justify-center mb-4">
+                                                <RotateCcw className="text-black/20" size={32} />
+                                            </div>
+                                            <p className="text-sm font-bold text-black/40">Awaiting System Data</p>
+                                        </div>
+                                    )}
+                                    {loading && !summary && (
+                                        <div className="h-64 glass-card rounded-[2.5rem] flex flex-col items-center justify-center p-10">
+                                            <div className="w-10 h-10 border-4 border-black/10 border-t-black rounded-full animate-spin" />
+                                            <p className="text-sm font-bold text-black/40 mt-4">Analyzing Dataset...</p>
+                                        </div>
+                                    )}
+                                    {summary && <DataTable rows={summary.table} />}
+                                </div>
+
+                                <div className="space-y-8">
+                                    <UploadForm onUpload={handleUpload} loading={loading} />
+                                    <div className="glass-card rounded-[2rem] p-8">
+                                        <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                                            <History size={18} className="text-black/40" /> Recent Runs
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {history.length > 0 ? history.map(item => (
+                                                <button
+                                                    key={item.id}
+                                                    onClick={() => handleSelectDataset(item.id)}
+                                                    className={`w-full text-left p-4 rounded-2xl transition-all duration-300 border-2 ${selectedDatasetId === item.id ? 'bg-black border-black text-white shadow-xl translate-x-1' : 'bg-black/5 border-transparent hover:bg-black/10'}`}
+                                                >
+                                                    <p className="text-xs font-black uppercase tracking-tight truncate">
+                                                        {item.original_filename || item.filename || item.name || `Dataset #${item.id}`}
+                                                    </p>
+                                                    <div className="flex items-center justify-between mt-1">
+                                                        <span className={`text-[9px] font-bold ${selectedDatasetId === item.id ? 'text-white/40' : 'text-black/30'} uppercase`}>
+                                                            Ready for Analysis
+                                                        </span>
+                                                        <div className={`w-1 h-1 rounded-full ${selectedDatasetId === item.id ? 'bg-white' : 'bg-black/20'}`} />
+                                                    </div>
+                                                </button>
+                                            )) : (
+                                                <p className="text-[10px] font-bold text-black/30 text-center py-4 uppercase">No history found</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Feature 5: AI Insights Generator */}
+                            {summary && (
+                                <div className="mt-10 p-8 glass-card rounded-[2.5rem] bg-gradient-to-br from-black/[0.02] to-transparent border-black/5 relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform duration-700">
+                                        <Sparkles size={120} />
+                                    </div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white">
+                                                <Zap size={16} fill="currentColor" />
+                                            </div>
+                                            <h3 className="text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                                                Automated System Insights
+                                                <span className="text-blue-500 lowercase opacity-60 font-medium tracking-normal text-[10px]">(powered by Gemini)</span>
+                                            </h3>
+                                        </div>
+                                        <div className="space-y-3 max-w-4xl">
+                                            {(summary.ai_insights || `• System operating with ${summary.total_equipment} units. • Average thermal load stable at ${summary.averages.temperature}°C.`).split(/[•*-]/).filter(p => p.trim()).map((point, i) => (
+                                                <div key={i} className="flex items-start gap-3">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0" />
+                                                    <p className="text-sm font-bold text-black/70 leading-relaxed italic">
+                                                        {point.trim().split(/(\d+(?:\.\d+)?%?)/).map((part, j) =>
+                                                            /(\d+(?:\.\d+)?%?)/.test(part) ?
+                                                                <span key={j} className="text-emerald-500 font-black">{part}</span> :
+                                                                part
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {activeView === 'history' && (
+                        <div className="space-y-8">
+                            <h2 className="text-2xl font-black">Extended History</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {history.map(item => (
+                                    <div key={item.id} className="glass-card p-6 rounded-3xl flex flex-col justify-between border border-black/5 hover:border-black/20 transition-all">
+                                        <div>
+                                            <p className="text-sm font-black truncate mb-1">
+                                                {item.original_filename || item.filename || item.name || `Dataset #${item.id}`}
+                                            </p>
+                                            <p className="text-[10px] text-black/40 font-bold uppercase tracking-widest">
+                                                ID: {item.id} • {new Date(item.uploaded_at).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => { setActiveView('dashboard'); handleSelectDataset(item.id); }}
+                                            className="mt-6 text-[10px] font-black uppercase tracking-widest bg-black text-white py-3 rounded-xl text-center hover:opacity-80 transition-opacity active:scale-95"
+                                        >
+                                            Analyze Dataset
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeView === 'risk' && (
+                        summary ? <RiskAnalysis data={summary} /> : (
+                            <div className="flex flex-col items-center justify-center p-20 text-center opacity-50">
+                                <AlertTriangle size={48} className="mb-4" />
+                                <h3 className="text-xl font-bold">No Dataset Selected</h3>
+                                <p className="text-sm">Please select a run from the Dashboard or History to perform risk analysis.</p>
+                                <button onClick={() => setActiveView('dashboard')} className="mt-6 px-6 py-2 bg-black text-white rounded-xl text-xs font-black uppercase tracking-widest">Go to Dashboard</button>
+                            </div>
+                        )
+                    )}
+
+                    {activeView === 'trends' && <TrendsView history={history} token={token} />}
+
+                    {activeView === 'analytics' && (
+                        summary ? <AnalyticsView data={summary} /> : (
+                            <div className="flex flex-col items-center justify-center p-20 text-center opacity-50">
+                                <BarChart3 size={48} className="mb-4" />
+                                <h3 className="text-xl font-bold">No Data for Correlation</h3>
+                                <p className="text-sm">Select a dataset to visualize parameter relationships.</p>
+                                <button onClick={() => setActiveView('dashboard')} className="mt-6 px-6 py-2 bg-black text-white rounded-xl text-xs font-black uppercase tracking-widest">Go to Dashboard</button>
+                            </div>
+                        )
+                    )}
+
+                    {activeView === 'settings' && (
+                        <div className="max-w-2xl mx-auto space-y-12 py-10">
+                            <h2 className="text-3xl font-black">System Settings</h2>
+                            <div className="space-y-6">
+                                <div className="glass-card p-8 rounded-[2rem]">
+                                    <h4 className="font-bold mb-4">API Configuration</h4>
+                                    <div className="p-4 bg-black/5 rounded-xl font-mono text-xs text-black/50 break-all">
+                                        {API_BASE_URL}
+                                    </div>
+                                </div>
+                                <div className="glass-card p-8 rounded-[2rem]">
+                                    <h4 className="font-bold mb-4">User Preferences</h4>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-medium">Automatic unit conversion</span>
+                                        <div className="w-12 h-6 bg-black rounded-full relative">
+                                            <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm" />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </main >
+        </div >
     );
 }

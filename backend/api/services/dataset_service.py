@@ -24,9 +24,11 @@ def handle_upload(file, user=None):
         # Note: dataset.file.path is available because we saved the object
         summary = analyze_csv(dataset.file.path)
         
-        # Integration: Add AI Insights if GEMINI_API_KEY is present
+        # Integration: Add Multi-View AI Insights
         from .ai_service import generate_chemical_insights
-        summary['ai_insights'] = generate_chemical_insights(summary)
+        summary['ai_insights'] = generate_chemical_insights(summary, "general")
+        summary['analytics_insight'] = generate_chemical_insights(summary, "analytics")
+        summary['trends_insight'] = generate_chemical_insights(summary, "trends")
         
         dataset.summary = summary
         dataset.save()

@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  /* Main Colors */
+  --color-primary: #000000;
+  --color-primary-light: #FAF9F6;
+
+  /* App/Background Colors */
+  --color-app-bg: #CDB885;
+  --color-app-surface: #EFE1B5;
+  --color-app-border: transparent;
+  /* Removed black borders */
+
+  /* Metric Specific Colors */
+  --color-flowrate: #10b981;
+  --color-pressure: #f59e0b;
+  --color-temperature: #ef4444;
+
+  /* Text Colors */
+  --color-content-main: #000000;
+  --color-content-muted: #000000;
+}
+
+* {
+  margin: 5;
+  padding: 5;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  @apply bg-app-bg text-content-main;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.02em;
+}
+
+@keyframes progress-fast {
+  0% {
+    width: 0%;
+  }
+
+  100% {
+    width: 100%;
+  }
+}
+
+.animate-progress-fast {
+  animation: progress-fast 2s linear infinite;
+}
